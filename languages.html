@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Getting Started</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter&amp;display=swap">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/css/styles.css">
+<script src="webui.js"></script>
+</head>
+
+<body>
+    <div style="width:1440px;height:900px;position:relative;background:white;overflow:hidden;">
+        <div style="width:1105px;height:900px;padding-left:40px;padding-right:40px;padding-top:32px;padding-bottom:32px;left:335px;top:0px;position:absolute;background:#F2F2F2;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:inline-flex;">
+            <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:20px;display:flex;">
+                <div style="width:295px;height:73px;padding:10px;justify-content:center;align-items:center;gap:10px;display:inline-flex;">
+                    <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Languages</span></div>
+                </div>
+                <div style="align-self:stretch;justify-content:flex-start;align-items:center;gap:20px;display:inline-flex;">
+                    <div class="app-btn" style="width:240px;height:240px;padding:24px;background:white;border-radius:32px;flex-direction:column;justify-content:space-between;align-items:flex-start;display:inline-flex;">
+                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">🇺🇸 English</span></div>
+                        <div style="opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Chosen</span></div>
+                    </div>
+                    <div class="app-btn" style="width:240px;height:240px;padding:24px;background:white;border-radius:32px;flex-direction:column;justify-content:space-between;align-items:flex-start;display:inline-flex;">
+                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">🇷🇺 Russian</span></div>
+                        <div style="color:#0D0085;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Choose</span></div>
+                    </div>
+                    <div class="app-btn" style="width:240px;height:240px;padding:24px;opacity:0.32;background:white;border-radius:32px;flex-direction:column;justify-content:space-between;align-items:flex-start;display:inline-flex;">
+                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">🇩🇪 Germany</span></div>
+                        <div style="opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">In progress</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex" style="width: 335px;height: 100vh;padding-left: 40px;padding-right: 40px;padding-top: 32px;padding-bottom: 32px;flex-direction: column;justify-content: space-between;align-items: flex-start;display: inline-flex;position: fixed;background: #ffffff;">
+            <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:20px;display:flex;">
+                <div style="align-self:stretch;padding:10px;justify-content:center;align-items:center;gap:10px;display:inline-flex;">
+                    <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Settings</span></div>
+                </div>
+                <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:4px;display:flex;">
+                    <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;" onclick="webui.goToProperties()">
+                        <div style="flex: 1 1 0;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;margin: 0px;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;color: rgb(150,150,150);">Properties</span></div>
+                    </div>
+                    <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;backdrop-filter: opacity(1);-webkit-backdrop-filter: opacity(1);" onclick="webui.goToLanguages()">
+                        <div style="flex:1 1 0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(0,0,0);">Languages</span></div>
+                    </div>
+                    <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;opacity: 1;" onclick="webui.goToInformation()">
+                        <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Information</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex" style="align-self:stretch;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
+                <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;background:black;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;">
+                    <div style="color:white;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Save</span></div>
+                </div>
+                <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;" onclick="webui.Exit()">
+                    <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Back</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>
