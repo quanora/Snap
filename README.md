@@ -9,6 +9,10 @@ The example of a card. The quality mostly depends on what model and prompt you a
 # How does this work?
 Screen → Word Selection → OCR → Context Extraction → LLM → Card Generation → Anki
 
+https://github.com/user-attachments/assets/66e97406-e0f7-4398-a40a-6c5de6095eee
+
+
+
 # Where are the settings?
 Tools → Snap
 
