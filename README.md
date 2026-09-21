@@ -6,15 +6,12 @@ This is the add-on for Anki, which make process of making cards faster while you
 The example of card. As for the quality, I think it mostly depends on what model and promt are you using. It's not stable
 <img width="811" height="622" alt="image" src="https://github.com/user-attachments/assets/c8c540d2-0946-48d2-be08-5e752654cead" />
 
-# What this add-on can?
+# How is this work?
+Screen → Word Selection → OCR → Context Extraction → LLM → Card Generation → Anki
 
-– Make screenshot of word that you don't understand using hotkey
-– After hotkey, the tool will take another screenshots: all subtitles, picture of the video
-– Taking text from screens using EasyOCR and then LLM is processing it.
-– After pressing of Ai, using AnkiConnection add-on
-
-– Use your own type of card and write the names of it. Also, you can write where you want to save it
-– LLM working locally. I was testing in LM studio, but I don't know about other services
+# Credits
+- EasyOCR – taking text from photos. 
+- AnkiConnection for adding cards
 
 
 
