@@ -1,7 +1,8 @@
-# The idea is to make process of making cards faster. You don't need to take screenshot and search for data. It will take from your screen.
+<img width="1710" height="286" alt="image" src="https://github.com/user-attachments/assets/43f620f1-a300-4e96-a9a0-92761e9fcaae" />
 
-This program will be created for Anki. And for immersion method. I mean, video from youtube, your video player, or just text. Span won't find any resources from Internet, it's full offline
+# Snap
+This is the add-on for Anki, which make process of making cards faster while you watching video in foreign language. You don't need to take lots of screenshot and search for data. It will take from your screen.
 
-You don't need to think where to put your card.
+The example of card. As for the quality, I think it mostly depends on what model are you using.
+<img width="811" height="622" alt="image" src="https://github.com/user-attachments/assets/c8c540d2-0946-48d2-be08-5e752654cead" />
 
-# Just focus on watching. No more routine
