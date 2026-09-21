@@ -13,4 +13,4 @@ Screen → Word Selection → OCR → Context Extraction → LLM → Card Genera
 Tools → Snap
 
 # Credits
-- [EasyOCR]([url](https://github.com/JaidedAI/EasyOCR)) – OCR engine
+- [EasyOCR](https://github.com/JaidedAI/EasyOCR) – OCR engine
