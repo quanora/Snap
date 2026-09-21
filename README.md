@@ -10,7 +10,7 @@ The example of card. As for the quality, I think it mostly depends on what model
 Screen → Word Selection → OCR → Context Extraction → LLM → Card Generation → Anki
 
 # Credits
-- EasyOCR – taking text from photos. 
+- [EasyOCR]([url](https://github.com/JaidedAI/EasyOCR)) – taking text from photos. 
 - AnkiConnection for adding cards
 
 
