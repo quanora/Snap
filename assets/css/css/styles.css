@@ -1,0 +1,75 @@
+/* Page styles */
+
+body {
+  background-color: #f3f3f3;
+}
+
+/* Header */
+
+header img {
+  max-width: 120px;
+}
+
+header h1 {
+  font-weight: bold;
+  font-size: 28px;
+}
+
+/* Content */
+
+.main {
+  max-width: 720px;
+  padding: 18px 20px;
+}
+
+@media (min-width: 576px) {
+  .main {
+    padding: 36px 42px;
+  }
+}
+
+.content h2 span {
+  color: var(--primary);
+}
+
+.content figure {
+  display: block;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.content figcaption {
+  font-size: 12px;
+  padding-top: 5px;
+}
+
+.content div.dropdown {
+  margin: 40px auto;
+  width: 132px;
+}
+
+.app-btn {
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  user-select: none;
+}
+
+.app-btn:hover {
+  opacity: 0.85;
+}
+
+.app-btn:active {
+  transform: scale(0.96);
+  opacity: 0.7;
+}
+
+.font-face {
+  font-family: 'Inter';
+  font-weight: 400;
+}
+
+.font-face {
+  font-family: 'Inter';
+  font-weight: 500;
+}
+

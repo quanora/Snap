@@ -1,0 +1,37 @@
+{
+    "fields": {
+        "Front": {
+            "name": "Лицо"
+        },
+        "Back": {
+            "name": "Оборот"
+        },
+        "Example": {
+            "name": "Пример"
+        },
+        "Picture": {
+            "name": "Фотография"
+        }
+    },
+    "custom_fields": [
+        {
+            "id": "custom_description",
+            "name": "Описание"
+        },
+        {
+            "id": "custom_transcription",
+            "name": "Транскрипция"
+        }
+    ],
+    "language": "English",
+    "hotkey": "cmd+shift+a",
+    "ocr_languages": [
+        "de"
+    ],
+    "prompt": "Generate exactly one high-quality Anki vocabulary card.\n\nUse the configured language rules and the provided word/context.\n\nFRONT:\n- Return the dictionary lemma/base form of the source word.\n- Convert an inflected form to its lemma when appropriate.\n- Keep the original source language.\n\nBACK:\n- Give one concise, natural translation into the configured translation language.\n- Choose the meaning that best matches the provided context.\n- Return one translation only.\n- Do not provide synonyms, alternatives, or multiple translations.\n\nEXAMPLE:\n- Copy one complete sentence directly from the provided context.\n- Keep the original language.\n- Copy it verbatim.\n- Do not rewrite or paraphrase it.\n- Remove only the final period.\n- If there is no complete usable sentence, return an empty string.\n\nTAG:\n- Return exactly one English part-of-speech tag.\n- Determine it from the grammatical usage in context.\n\nCUSTOM FIELDS:\n- Custom fields are completely generic and may have any names.\n- Fill every configured custom field according to its configured name and the overall purpose of the field.\n- Do not assume any specific custom field IDs.\n- Do not assume any fixed set of custom fields.\n- Use the configured field name as the main instruction for what belongs in that field.\n- Keep custom field values concise and useful for language learning.\n- Follow additional instructions from the user's prompt.\n\nGENERAL:\n- Do not invent information unsupported by the word and context.\n- Keep every field concise and useful.\n- Return only the requested JSON.",
+    "deck": "Test",
+    "note_model": "Базовый (ввод ответа)",
+    "llm_url": "http://127.0.0.1:11434/v1",
+    "llm_model": "",
+    "ocr_correction": true
+}
