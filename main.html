@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter&amp;display=swap">
     <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="stylesheet" href="assets/css/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/css/styles.css">
 <script src="webui.js"></script>
 </head>
@@ -21,105 +21,95 @@
                     <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Properties</span></div>
                 </div>
                 <div class="d-flex flex-grow-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                    <div style="flex:1 1 0;max-width:350px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Fields</span></div>
+                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">OCR Languages</span></div>
+                        <div class="d-flex flex-grow-1 flex-fill" style="align-self: stretch;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span style="font-family: Inter, sans-serif;">Select up to 3 languages used for text recognition.</span></div>
+                        <div class="d-flex flex-grow-1 flex-fill" style="align-self: stretch;color: #808080;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span style="font-family: Inter, sans-serif;">Powered by EasyOCR</span></div>
+                    </div>
+                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px;"><input type="text" id="languageSearch" class="input-app" placeholder="Search" style="margin: 0px;margin-bottom: 8px;">
+                        <div id="languages" style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:8px;display:flex;flex-wrap:wrap;align-content:center;"></div>
+                    </div>
+                </div>
+                <div class="d-flex flex-grow-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
+                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Card fields</span></div>
                         <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Use the exact name like in your Anki</span></div>
                     </div>
-                    <div style="flex:1 1 0;flex-direction:column;justify-content:center;align-items:flex-start;gap:24px;display:inline-flex;">
-                        <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
+                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
+                        <div class="d-flex flex-grow-1" style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
                             <div class="font-weight-bold" style="align-self: stretch;color: black;font-size: 24px;font-family: Inter, sans-serif;font-weight: 500;word-wrap: break-word;"><span class="font-weight-bold">Default</span></div>
                             <div style="align-self:stretch;border-radius:16px;flex-direction:column;justify-content:center;align-items:center;display:flex;">
                                 <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
                                     <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Front</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.3103 6.87915L17.1216 2.68946C16.9823 2.55014 16.8169 2.43962 16.6349 2.36421C16.4529 2.28881 16.2578 2.25 16.0608 2.25C15.8638 2.25 15.6687 2.28881 15.4867 2.36421C15.3047 2.43962 15.1393 2.55014 15 2.68946L3.43969 14.2507C3.2998 14.3895 3.18889 14.5547 3.11341 14.7367C3.03792 14.9188 2.99938 15.114 3.00001 15.311V19.5007C3.00001 19.8985 3.15804 20.2801 3.43935 20.5614C3.72065 20.8427 4.10218 21.0007 4.50001 21.0007H8.6897C8.88675 21.0013 9.08197 20.9628 9.26399 20.8873C9.44602 20.8118 9.61122 20.7009 9.75001 20.561L21.3103 9.00071C21.4496 8.86142 21.5602 8.69604 21.6356 8.51403C21.711 8.33202 21.7498 8.13694 21.7498 7.93993C21.7498 7.74292 21.711 7.54784 21.6356 7.36582C21.5602 7.18381 21.4496 7.01844 21.3103 6.87915ZM8.6897 19.5007H4.50001V15.311L12.75 7.06102L16.9397 11.2507L8.6897 19.5007ZM18 10.1895L13.8103 6.00071L16.0603 3.75071L20.25 7.93946L18 10.1895Z" fill="#CACACA"></path>
-                    </svg></div>
+                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Front" style="font-family: Inter, sans-serif;">Front</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Front&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
                                     </div>
-                                    <div style="flex:1 1 0;opacity:0.30;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Front</span></div>
+                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Front</span></div>
                                 </div>
                                 <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
                                     <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Back</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.3103 6.87915L17.1216 2.68946C16.9823 2.55014 16.8169 2.43962 16.6349 2.36421C16.4529 2.28881 16.2578 2.25 16.0608 2.25C15.8638 2.25 15.6687 2.28881 15.4867 2.36421C15.3047 2.43962 15.1393 2.55014 15 2.68946L3.43969 14.2507C3.2998 14.3895 3.18889 14.5547 3.11341 14.7367C3.03792 14.9188 2.99938 15.114 3.00001 15.311V19.5007C3.00001 19.8985 3.15804 20.2801 3.43935 20.5614C3.72065 20.8427 4.10218 21.0007 4.50001 21.0007H8.6897C8.88675 21.0013 9.08197 20.9628 9.26399 20.8873C9.44602 20.8118 9.61122 20.7009 9.75001 20.561L21.3103 9.00071C21.4496 8.86142 21.5602 8.69604 21.6356 8.51403C21.711 8.33202 21.7498 8.13694 21.7498 7.93993C21.7498 7.74292 21.711 7.54784 21.6356 7.36582C21.5602 7.18381 21.4496 7.01844 21.3103 6.87915ZM8.6897 19.5007H4.50001V15.311L12.75 7.06102L16.9397 11.2507L8.6897 19.5007ZM18 10.1895L13.8103 6.00071L16.0603 3.75071L20.25 7.93946L18 10.1895Z" fill="#CACACA"></path>
-                    </svg></div>
+                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Back" style="font-family: Inter, sans-serif;">Back</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Back&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
                                     </div>
-                                    <div style="flex:1 1 0;opacity:0.30;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Back</span></div>
+                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Back</span></div>
                                 </div>
                                 <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
                                     <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div class="font-weight-lighter" style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Example</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.3103 6.87915L17.1216 2.68946C16.9823 2.55014 16.8169 2.43962 16.6349 2.36421C16.4529 2.28881 16.2578 2.25 16.0608 2.25C15.8638 2.25 15.6687 2.28881 15.4867 2.36421C15.3047 2.43962 15.1393 2.55014 15 2.68946L3.43969 14.2507C3.2998 14.3895 3.18889 14.5547 3.11341 14.7367C3.03792 14.9188 2.99938 15.114 3.00001 15.311V19.5007C3.00001 19.8985 3.15804 20.2801 3.43935 20.5614C3.72065 20.8427 4.10218 21.0007 4.50001 21.0007H8.6897C8.88675 21.0013 9.08197 20.9628 9.26399 20.8873C9.44602 20.8118 9.61122 20.7009 9.75001 20.561L21.3103 9.00071C21.4496 8.86142 21.5602 8.69604 21.6356 8.51403C21.711 8.33202 21.7498 8.13694 21.7498 7.93993C21.7498 7.74292 21.711 7.54784 21.6356 7.36582C21.5602 7.18381 21.4496 7.01844 21.3103 6.87915ZM8.6897 19.5007H4.50001V15.311L12.75 7.06102L16.9397 11.2507L8.6897 19.5007ZM18 10.1895L13.8103 6.00071L16.0603 3.75071L20.25 7.93946L18 10.1895Z" fill="#CACACA"></path>
-                    </svg></div>
+                                        <div class="font-weight-lighter" style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Example" style="font-family: Inter, sans-serif;">Example</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Example&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
                                     </div>
-                                    <div style="flex:1 1 0;opacity:0.30;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Example</span></div>
+                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Example</span></div>
                                 </div>
                                 <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
                                     <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Picture</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.3103 6.87915L17.1216 2.68946C16.9823 2.55014 16.8169 2.43962 16.6349 2.36421C16.4529 2.28881 16.2578 2.25 16.0608 2.25C15.8638 2.25 15.6687 2.28881 15.4867 2.36421C15.3047 2.43962 15.1393 2.55014 15 2.68946L3.43969 14.2507C3.2998 14.3895 3.18889 14.5547 3.11341 14.7367C3.03792 14.9188 2.99938 15.114 3.00001 15.311V19.5007C3.00001 19.8985 3.15804 20.2801 3.43935 20.5614C3.72065 20.8427 4.10218 21.0007 4.50001 21.0007H8.6897C8.88675 21.0013 9.08197 20.9628 9.26399 20.8873C9.44602 20.8118 9.61122 20.7009 9.75001 20.561L21.3103 9.00071C21.4496 8.86142 21.5602 8.69604 21.6356 8.51403C21.711 8.33202 21.7498 8.13694 21.7498 7.93993C21.7498 7.74292 21.711 7.54784 21.6356 7.36582C21.5602 7.18381 21.4496 7.01844 21.3103 6.87915ZM8.6897 19.5007H4.50001V15.311L12.75 7.06102L16.9397 11.2507L8.6897 19.5007ZM18 10.1895L13.8103 6.00071L16.0603 3.75071L20.25 7.93946L18 10.1895Z" fill="#CACACA"></path>
-                    </svg></div>
+                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Picture" style="font-family: Inter, sans-serif;">Picture</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Picture&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
                                     </div>
-                                    <div style="flex:1 1 0;opacity:0.30;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Picture</span></div>
+                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Picture</span></div>
                                 </div>
                             </div>
                         </div>
-                        <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
+                        <div class="text-left d-flex flex-grow-1" style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
                             <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:4px;display:flex;">
                                 <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Custom</span></div>
-                                <div style="align-self:stretch;opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">These fields will be written by AI</span></div>
+                                <div style="align-self: stretch;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">These fields will be written by AI</span></div>
                             </div>
-                            <div style="align-self:stretch;border-radius:16px;flex-direction:column;justify-content:center;align-items:center;display:flex;">
-                                <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:10px;display:inline-flex;">
-                                    <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Transcription</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.3103 6.87915L17.1216 2.68946C16.9823 2.55014 16.8169 2.43962 16.6349 2.36421C16.4529 2.28881 16.2578 2.25 16.0608 2.25C15.8638 2.25 15.6687 2.28881 15.4867 2.36421C15.3047 2.43962 15.1393 2.55014 15 2.68946L3.43969 14.2507C3.2998 14.3895 3.18889 14.5547 3.11341 14.7367C3.03792 14.9188 2.99938 15.114 3.00001 15.311V19.5007C3.00001 19.8985 3.15804 20.2801 3.43935 20.5614C3.72065 20.8427 4.10218 21.0007 4.50001 21.0007H8.6897C8.88675 21.0013 9.08197 20.9628 9.26399 20.8873C9.44602 20.8118 9.61122 20.7009 9.75001 20.561L21.3103 9.00071C21.4496 8.86142 21.5602 8.69604 21.6356 8.51403C21.711 8.33202 21.7498 8.13694 21.7498 7.93993C21.7498 7.74292 21.711 7.54784 21.6356 7.36582C21.5602 7.18381 21.4496 7.01844 21.3103 6.87915ZM8.6897 19.5007H4.50001V15.311L12.75 7.06102L16.9397 11.2507L8.6897 19.5007ZM18 10.1895L13.8103 6.00071L16.0603 3.75071L20.25 7.93946L18 10.1895Z" fill="#CACACA"></path>
-                    </svg></div>
-                                    </div>
-                                    <div data-svg-wrapper="" style="position:relative;"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2.625C11.7502 2.625 9.551 3.29213 7.68039 4.54203C5.80978 5.79193 4.35182 7.56847 3.49088 9.64698C2.62993 11.7255 2.40467 14.0126 2.84357 16.2192C3.28248 18.4257 4.36584 20.4525 5.95667 22.0433C7.54749 23.6342 9.57432 24.7175 11.7809 25.1564C13.9874 25.5953 16.2745 25.3701 18.353 24.5091C20.4315 23.6482 22.2081 22.1902 23.458 20.3196C24.7079 18.449 25.375 16.2498 25.375 14C25.3718 10.9841 24.1724 8.09271 22.0398 5.96018C19.9073 3.82764 17.0159 2.62818 14 2.625ZM18.375 14.875H9.62501C9.39294 14.875 9.17038 14.7828 9.00629 14.6187C8.84219 14.4546 8.75001 14.2321 8.75001 14C8.75001 13.7679 8.84219 13.5454 9.00629 13.3813C9.17038 13.2172 9.39294 13.125 9.62501 13.125H18.375C18.6071 13.125 18.8296 13.2172 18.9937 13.3813C19.1578 13.5454 19.25 13.7679 19.25 14C19.25 14.2321 19.1578 14.4546 18.9937 14.6187C18.8296 14.7828 18.6071 14.875 18.375 14.875Z" fill="#FF3B30"></path>
-                  </svg></div>
-                                </div>
-                                <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:10px;display:inline-flex;">
-                                    <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Description</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.3103 6.87915L17.1216 2.68946C16.9823 2.55014 16.8169 2.43962 16.6349 2.36421C16.4529 2.28881 16.2578 2.25 16.0608 2.25C15.8638 2.25 15.6687 2.28881 15.4867 2.36421C15.3047 2.43962 15.1393 2.55014 15 2.68946L3.43969 14.2507C3.2998 14.3895 3.18889 14.5547 3.11341 14.7367C3.03792 14.9188 2.99938 15.114 3.00001 15.311V19.5007C3.00001 19.8985 3.15804 20.2801 3.43935 20.5614C3.72065 20.8427 4.10218 21.0007 4.50001 21.0007H8.6897C8.88675 21.0013 9.08197 20.9628 9.26399 20.8873C9.44602 20.8118 9.61122 20.7009 9.75001 20.561L21.3103 9.00071C21.4496 8.86142 21.5602 8.69604 21.6356 8.51403C21.711 8.33202 21.7498 8.13694 21.7498 7.93993C21.7498 7.74292 21.711 7.54784 21.6356 7.36582C21.5602 7.18381 21.4496 7.01844 21.3103 6.87915ZM8.6897 19.5007H4.50001V15.311L12.75 7.06102L16.9397 11.2507L8.6897 19.5007ZM18 10.1895L13.8103 6.00071L16.0603 3.75071L20.25 7.93946L18 10.1895Z" fill="#CACACA"></path>
-                    </svg></div>
-                                    </div>
-                                    <div data-svg-wrapper="" style="position:relative;"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2.625C11.7502 2.625 9.551 3.29213 7.68039 4.54203C5.80978 5.79193 4.35182 7.56847 3.49088 9.64698C2.62993 11.7255 2.40467 14.0126 2.84357 16.2192C3.28248 18.4257 4.36584 20.4525 5.95667 22.0433C7.54749 23.6342 9.57432 24.7175 11.7809 25.1564C13.9874 25.5953 16.2745 25.3701 18.353 24.5091C20.4315 23.6482 22.2081 22.1902 23.458 20.3196C24.7079 18.449 25.375 16.2498 25.375 14C25.3718 10.9841 24.1724 8.09271 22.0398 5.96018C19.9073 3.82764 17.0159 2.62818 14 2.625ZM18.375 14.875H9.62501C9.39294 14.875 9.17038 14.7828 9.00629 14.6187C8.84219 14.4546 8.75001 14.2321 8.75001 14C8.75001 13.7679 8.84219 13.5454 9.00629 13.3813C9.17038 13.2172 9.39294 13.125 9.62501 13.125H18.375C18.6071 13.125 18.8296 13.2172 18.9937 13.3813C19.1578 13.5454 19.25 13.7679 19.25 14C19.25 14.2321 19.1578 14.4546 18.9937 14.6187C18.8296 14.7828 18.6071 14.875 18.375 14.875Z" fill="#FF3B30"></path>
-                  </svg></div>
-                                </div>
+                            <div id="customFields" style="align-self:stretch;border-radius:16px;flex-direction:column;justify-content:center;align-items:center;display:flex;"></div>
+                            <div class="text-center d-flex flex-grow-1 app-btn" id="addCustomField" style="width: 100%;wflex: 1 1 0;padding-left: 16px;padding-right: 16px;padding-top: 4px;padding-bottom: 8px;background: #f2f2f2;border-radius: 8px;justify-content: center;align-items: center;gap: 10px;display: flex;margin-top: 12px;">
+                                <div class="text-center d-flex flex-grow-1 text-center" style="color: white;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;text-align: center;" onclick="webui.addCustomField()"><span class="font-weight-normal text-center flex-grow-1 text-center" style="font-family: Inter, sans-serif;text-align: center;color: rgb(0,0,0);">Add</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="d-flex flex-grow-1" id="deckInput" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
+                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">Deck</span></div>
+                        <div class="d-flex flex-grow-1 flex-fill" style="align-self: stretch;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span style="font-family: Inter, sans-serif;">Choose the Anki deck where new cards will be added</span></div>
+                    </div>
+                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px;"><input type="text" id="inputDeck" class="input-app" placeholder="All decks::Languages::English::Mining" style="margin: 0px;margin-bottom: 8px;"></div>
+                </div>
+                <div class="d-flex flex-grow-1" id="deckInput-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
+                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">Hotkey</span></div>
+                        <div class="d-flex flex-grow-1 flex-fill" style="align-self: stretch;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span style="font-family: Inter, sans-serif;">Press a keyboard shortcut to start word and context capture</span></div>
+                    </div>
+                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px;"><input type="text" id="hotkeyInput" class="input-app" placeholder="Cmd + Shift + A" style="margin: 0px;margin-bottom: 8px;" readonly=""></div>
+                </div>
                 <div class="d-flex flex-grow-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
+                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">API URL</span></div>
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;">Connect to a local OpenAI-compatible language model</span></div>
+                    </div>
+                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 8px;"><input class="d-flex flex-grow-1 input-app" type="text" id="llmUrl" placeholder="http://127.0.0.1:11434" style="min-width: 0;flex:1 1 0;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;display:inline-flex;">
+                        <div class="d-flex flex-grow-1" style="align-self:stretch;opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="d-flex flex-grow-1" style="font-family: Inter, sans-serif;">I would recommend to use LM Studio for this:</span></div>
+                        <div class="d-flex flex-grow-1" style="align-self:stretch;opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;text-decoration:underline;word-wrap:break-word;"><span class="d-flex flex-grow-1" id="lmStudioLink" style="font-family: Inter, sans-serif;">https://lmstudio.ai/docs/developer/core/server/serve-on-network</span></div>
+                    </div>
+                </div>
+                <div class="d-flex flex-grow-1" id="deckInput-2" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
                     <div style="flex:1 1 0;max-width:350px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Picture</span></div>
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Choose the area that will used for your cards </span></div>
-                        <div style="align-self:stretch;justify-content:flex-start;align-items:center;gap:12px;display:inline-flex;">
-                            <div data-svg-wrapper="" style="position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              
-              <path d="M21 13.5006V19.5006C21 19.6995 20.921 19.8903 20.7803 20.0309C20.6397 20.1716 20.4489 20.2506 20.25 20.2506H3.75C3.55109 20.2506 3.36032 20.1716 3.21967 20.0309C3.07902 19.8903 3 19.6995 3 19.5006V13.5006C3 13.3017 3.07902 13.1109 3.21967 12.9703C3.36032 12.8296 3.55109 12.7506 3.75 12.7506C3.94891 12.7506 4.13968 12.8296 4.28033 12.9703C4.42098 13.1109 4.5 13.3017 4.5 13.5006V18.7506H19.5V13.5006C19.5 13.3017 19.579 13.1109 19.7197 12.9703C19.8603 12.8296 20.0511 12.7506 20.25 12.7506C20.4489 12.7506 20.6397 12.8296 20.7803 12.9703C20.921 13.1109 21 13.3017 21 13.5006ZM8.78063 7.28122L11.25 4.8109V13.5006C11.25 13.6995 11.329 13.8903 11.4697 14.0309C11.6103 14.1716 11.8011 14.2506 12 14.2506C12.1989 14.2506 12.3897 14.1716 12.5303 14.0309C12.671 13.8903 12.75 13.6995 12.75 13.5006V4.8109L15.2194 7.28122C15.3601 7.42195 15.551 7.50101 15.75 7.50101C15.949 7.50101 16.1399 7.42195 16.2806 7.28122C16.4214 7.14048 16.5004 6.94961 16.5004 6.75059C16.5004 6.55157 16.4214 6.3607 16.2806 6.21996L12.5306 2.46996C12.461 2.40023 12.3783 2.34491 12.2872 2.30717C12.1962 2.26943 12.0986 2.25 12 2.25C11.9014 2.25 11.8038 2.26943 11.7128 2.30717C11.6217 2.34491 11.539 2.40023 11.4694 2.46996L7.71937 6.21996C7.57864 6.3607 7.49958 6.55157 7.49958 6.75059C7.49958 6.94961 7.57864 7.14048 7.71937 7.28122C7.86011 7.42195 8.05098 7.50101 8.25 7.50101C8.44902 7.50101 8.63989 7.42195 8.78063 7.28122Z" fill="black"></path>
-              
-              </svg></div>
-                            <div style="flex:1 1 0;opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Upload your own photo</span></div>
-                        </div>
-                    </div>
-                    <div style="flex:1 1 0;height:390.29px;position:relative;border-radius:16px;background-image:url(https://placehold.co/603x390);">
-                        <div style="width:327px;height:184px;left:111px;top:56px;position:absolute;background:rgba(217, 217, 217, 0.50);border-radius:6px;border:2px white solid;"></div>
-                        <div style="padding:4px;left:498px;top:304px;position:absolute;background:white;border-radius:12px;justify-content:flex-start;align-items:center;gap:10px;display:inline-flex;">
-                            <div style="width:40px;height:40px;position:relative;overflow:hidden;">
-                                <div style="width:27.50px;height:27.50px;left:6.25px;top:6.25px;position:absolute;background:black;"></div>
-                            </div>
-                        </div>
-                    </div>
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">Generation Prompt</span></div>
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;">Customize the content of each Anki card.</span></div>
+                    </div><textarea id="promptInput" class="input-app" style="min-width: 0;flex: 1 1 0;flex-direction: column;justify-content: center;align-items: flex-start;gap: 12px;display: inline-flex;height: 299px;" placeholder="Write promt"></textarea>
                 </div>
             </div>
         </div>
@@ -132,16 +122,16 @@
                     <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;" onclick="webui.goToProperties()">
                         <div style="flex: 1 1 0;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;margin: 0px;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;color: rgb(0,0,0);">Properties</span></div>
                     </div>
-                    <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;backdrop-filter: opacity(1);-webkit-backdrop-filter: opacity(1);" onclick="webui.goToLanguages()">
-                        <div style="flex:1 1 0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Languages</span></div>
-                    </div>
                     <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;opacity: 1;" onclick="webui.goToInformation()">
                         <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Information</span></div>
                     </div>
                 </div>
+                <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;opacity: 1;" onclick="webui.Reset()">
+                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(61,61,61);">Reset settings</span></div>
+                </div>
             </div>
             <div class="d-flex" style="align-self:stretch;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
-                <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;background:black;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;">
+                <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;background:black;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;" onclick="webui.Save()">
                     <div style="color:white;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Save</span></div>
                 </div>
                 <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;" onclick="webui.Exit()">
@@ -152,6 +142,11 @@
     </div>
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/fields.js"></script>
+    <script src="assets/js/Languages.js"></script>
+    <script src="assets/js/links.js"></script>
+    <script src="assets/js/LLM.js"></script>
+    <script src="assets/js/requestSettings.js"></script>
 </body>
 
 </html>
