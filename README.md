@@ -18,3 +18,6 @@ Tools → Snap
 
 # Credits
 - [EasyOCR](https://github.com/JaidedAI/EasyOCR) – OCR engine
+
+# Discord server with news
+https://discord.gg/rSPWngqEQ
