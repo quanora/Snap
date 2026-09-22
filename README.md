@@ -1,4 +1,5 @@
-<img width="1710" height="286" alt="image" src="https://github.com/user-attachments/assets/43f620f1-a300-4e96-a9a0-92761e9fcaae" />
+<img width="1710" height="286" alt="image" src="https://github.com/user-attachments/assets/2ff163e8-4279-415b-8d90-7c9167bd2639" />
+
 
 # Snap (BETA)
 This is an add-on for Anki, which makes the process of creating cards faster while watching videos in a foreign language. You don't need to take multiple screenshots and search for information. It will capture information from your screen.
