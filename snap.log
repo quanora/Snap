@@ -1,0 +1,67 @@
+===== SNAP START =====
+Snap: menu item created
+
+===== SNAP BOOTSTRAP =====
+Snap: architecture = arm64
+Snap: addon directory = /Users/papka/Library/Application Support/Anki2/addons21/snap_addon
+Snap: requirements.txt is up to date
+Snap: uv already exists: /Users/papka/Library/Application Support/Anki2/addons21/snap_addon/.snap/uv
+Snap: Python environment already exists
+Snap: installing dependencies
+Checked 5 packages in 47ms
+
+Snap: dependencies are ready
+Snap: bootstrap completed
+Snap: OCR path = /Users/papka/Library/Application Support/Anki2/addons21/snap_addon/ocr.py
+Snap: OCR started, PID=7162
+Card: input word = 否定的な
+Card: input context = 私は否定的な立場だよ。 知ってる。
+Card: configured language profiles = {'English': {'translation_language': 'Russian', 'deck': 'All decks::Languages::English::Mining'}, 'German': {'translation_language': 'English', 'deck': 'All decks::Languages::German::Mining'}, 'Japanese': {'translation_language': 'English', 'deck': 'Test'}}
+Card: running model = gemma-4-e4b-uncensored-hauhaucs-aggressive@q4_k_m
+Card: Unicode language detection = Japanese
+Card: detected language = Japanese
+Card: profile translation = English
+Card: profile deck = Test
+Card: source language = Japanese
+Card: translation language = English
+Card: corrected word = 否定的な
+Card: corrected context = 私は否定的な立場だよ。 知ってる。
+Card: generated fields = {'source_language': 'Japanese', 'translation_language': 'English', 'corrected_word': '否定的な', 'corrected_context': '私は否定的な立場だよ。 知ってる。', 'front': '否定的な', 'back': 'negative', 'example': '私は否定的な立場だよ。', 'tag': 'adjective', 'custom': {'custom_description': '反対や否定的である性質を持つこと、またはそうした状態にあることを示す形容動詞の語幹。', 'custom_transcription': '/hitei-teki na/'}}
+Card: deck = Test
+Card: note type = Базовый (ввод ответа)
+Card: can add = {'canAdd': True}
+Card: added to Anki = 1790491806388
+Card: input word = 見ようとしない
+Card: input context = 人間の脳は見たくないものは 見ようとしない。
+Card: configured language profiles = {'English': {'translation_language': 'Russian', 'deck': 'All decks::Languages::English::Mining'}, 'German': {'translation_language': 'English', 'deck': 'All decks::Languages::German::Mining'}, 'Japanese': {'translation_language': 'English', 'deck': 'Test'}}
+Card: running model = gemma-4-e4b-uncensored-hauhaucs-aggressive@q4_k_m
+Card: Unicode language detection = Japanese
+Card: detected language = Japanese
+Card: profile translation = English
+Card: profile deck = Test
+Card: source language = Japanese
+Card: translation language = English
+Card: corrected word = 見ようとしない
+Card: corrected context = 人間の脳は見たくないものは 見ようとしない。
+Card: generated fields = {'source_language': 'Japanese', 'translation_language': 'English', 'corrected_word': '見ようとしない', 'corrected_context': '人間の脳は見たくないものは 見ようとしない。', 'front': '見ようとしない', 'back': 'does not try to see (or look at)', 'example': '人間の脳は見たくないものは 見ようとしない。', 'tag': 'verb', 'custom': {'custom_description': '意識的に何かに目を向けたり、注意を払おうとしたりしないこと。', 'custom_transcription': '/miyou to shinai/'}}
+Card: deck = Test
+Card: note type = Базовый (ввод ответа)
+Card: can add = {'canAdd': True}
+Card: added to Anki = 1790492234262
+Card: input word = deceived by
+Card: input context = You were led to， deceived by the Man-God.
+Card: configured language profiles = {'English': {'translation_language': 'Russian', 'deck': 'All decks::Languages::English::Mining'}, 'German': {'translation_language': 'English', 'deck': 'All decks::Languages::German::Mining'}, 'Japanese': {'translation_language': 'English', 'deck': 'Test'}}
+Card: running model = gemma-4-e4b-uncensored-hauhaucs-aggressive@q4_k_m
+Card: LLM language detection = English
+Card: detected language = English
+Card: profile translation = Russian
+Card: profile deck = All decks::Languages::English::Mining
+Card: source language = English
+Card: translation language = Russian
+Card: corrected word = deceived by
+Card: corrected context = You were led to, deceived by the Man-God.
+Card: generated fields = {'source_language': 'English', 'translation_language': 'Russian', 'corrected_word': 'deceived by', 'corrected_context': 'You were led to, deceived by the Man-God.', 'front': 'deceived by', 'back': 'обманутым (кем-то)', 'example': 'You were led to, deceived by the Man-God', 'tag': 'verb', 'custom': {'custom_description': "Past participle form of 'deceive,' used here in a passive construction meaning being tricked or misled by someone or something.", 'custom_transcription': '/dɪˈsiːvd baɪ/'}}
+Card: deck = All decks::Languages::English::Mining
+Card: note type = Базовый (ввод ответа)
+Card: can add = {'canAdd': True}
+Card: added to Anki = 1790494599745

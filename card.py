@@ -5,6 +5,7 @@ import uuid
 import subprocess
 import urllib.request
 import urllib.error
+import re
 
 from openai import OpenAI
 
@@ -24,7 +25,6 @@ SUCCESS_SOUND = "/System/Library/Sounds/Funk.aiff"
 ERROR_SOUND = "/System/Library/Sounds/Sosumi.aiff"
 AFPLAY = "/usr/bin/afplay"
 
-TRANSLATION_LANGUAGE = "English"
 
 ALLOWED_TAGS = {
     "noun",
@@ -43,98 +43,31 @@ ALLOWED_TAGS = {
 
 
 DEFAULT_PROMPT = """
-You generate exactly one high-quality Anki vocabulary card.
+You create exactly one concise language-learning Anki card.
 
 The application provides:
-- word: the target vocabulary item
-- context: the text containing the target
-- source language: the language being learned
+SOURCE LANGUAGE = the language being learned
+TRANSLATION LANGUAGE = the language used for BACK
 
-The configured source language is authoritative.
-The translation language is English.
+These are the actual settings for the current card. They are variable. Always use them exactly. Never replace them based on the conversation, context, field names, or examples.
 
-Use the provided source language consistently.
-Do not switch to another source language based on the conversation or context.
+The input contains TARGET WORD and CONTEXT. TARGET WORD is the only vocabulary item being taught. CONTEXT is used to determine its meaning, grammatical role, example, and pronunciation.
 
-SOURCE WORD
+Correct only obvious OCR errors. Do not invent text or substantially rewrite normal text.
 
-Use the provided word as the only vocabulary target.
+FRONT:
+Only the vocabulary item being taught, in SOURCE LANGUAGE. Use the normal dictionary/base form for a single word when appropriate. Preserve fixed expressions, idioms, phrasal verbs, slang, compounds, and other multi-word lexical items. Do not include translation, explanation, pronunciation, labels, grammar information, or surrounding sentence material.
 
-Convert the target to the standard dictionary form appropriate for the source language when this does not change its meaning.
+BACK:
+Exactly one concise natural translation of FRONT into TRANSLATION LANGUAGE. Translate FRONT itself, not the whole CONTEXT or EXAMPLE. Use CONTEXT only to choose the intended meaning. Do not add synonyms, alternatives, parentheses, explanations, examples, labels, or source-language text.
 
-Use the normal citation form of that language.
+EXAMPLE:
+Use SOURCE LANGUAGE only. If CONTEXT contains a usable sentence or phrase containing the target, preserve its wording as closely as possible. Do not translate, paraphrase, expand, or invent a different example when usable context exists. Remove only obvious OCR garbage or irrelevant surrounding text. Create a short example only when CONTEXT is unusable. Do not add a final period.
 
-Preserve:
-- fixed expressions;
-- idioms;
-- phrasal verbs;
-- slang;
-- compounds;
-- other multi-word vocabulary items.
+TAG:
+Return exactly one allowed tag.
 
-Do not replace the target with another word from the context.
-
-FRONT
-
-Return only the standard dictionary form or fixed expression.
-
-FRONT must:
-- stay in the source language;
-- contain only the vocabulary item;
-- contain no translation;
-- contain no explanation;
-- contain no labels;
-- contain no pronunciation;
-- contain no grammatical information.
-
-BACK
-
-Return exactly one natural English translation of FRONT.
-
-Choose the meaning that best matches the provided context.
-
-Prefer a natural translation over a literal translation when the context clearly requires it.
-
-BACK must contain only the translation.
-
-Do not include:
-- synonyms;
-- alternatives;
-- multiple translations;
-- slash-separated translations;
-- explanations;
-- examples;
-- the original context;
-- the source-language word;
-- the field name.
-
-Do not repeat FRONT as BACK.
-
-EXAMPLE
-
-Return one short, natural example in the source language that demonstrates the meaning of FRONT.
-
-Prefer a suitable sentence from the provided context.
-
-When the context contains a suitable complete sentence:
-- reuse it;
-- preserve its wording;
-- do not translate it;
-- do not rewrite it unnecessarily.
-
-When the context is a fragment, incomplete, or otherwise unsuitable:
-- create a short natural sentence in the source language;
-- clearly demonstrate the intended meaning.
-
-Do not create an unrelated example when the context already provides a suitable one.
-
-Do not add a final period.
-
-TAG
-
-Return exactly one primary part-of-speech tag.
-
-Allowed values:
+Allowed tags:
 noun
 verb
 adjective
@@ -148,66 +81,37 @@ phrase
 symbol
 math
 
-Choose the tag according to the grammatical role of the target in context.
+Use phrase for normal multi-word lexical expressions, including phrasal verbs. Use the grammatical role in context for single words.
 
-Do not use language names or language codes as tags.
+CUSTOM FIELDS:
+Fill every configured custom field exactly once.
 
-CUSTOM FIELDS
+For the field with ID custom_description:
+Write a short dictionary-style definition of FRONT.
+The definition MUST be entirely in SOURCE LANGUAGE.
+Do not use the language of the field name.
+Do not translate FRONT.
+Do not repeat FRONT.
+Do not describe the context.
+Do not mention the card or the field.
 
-The application may provide zero, one, or many custom fields.
+For the field with ID custom_transcription:
+Return ONLY the IPA pronunciation of FRONT in SOURCE LANGUAGE.
+Use /slashes/.
+Never return the normal spelling of FRONT, square brackets, "IPA:", labels, or explanations.
 
-Custom field names may be written in any language and may describe any kind of information.
+For every other custom field:
+Infer its purpose from its configured human-readable name. Return only the information requested by that field. Keep it concise. Do not duplicate FRONT, BACK, EXAMPLE, TAG, or other custom fields unless explicitly required. Follow the language and format implied by the field's purpose. If the purpose is genuinely unclear, return an empty string.
 
-For every configured custom field:
+Only TARGET WORD is the vocabulary target. Do not choose another word from CONTEXT.
 
-- Determine the intended purpose from its configured name.
-- Generate only the information that belongs in that field.
-- Keep the value concise and useful.
-- Do not repeat FRONT, BACK, EXAMPLE, or TAG unless the field explicitly asks for one of them.
-- Do not repeat information already present in another field unless the field requires it.
-- Do not add explanations about what the field means.
-- Do not add labels such as "Description:" or "Translation:" unless the field explicitly requires them.
-- Follow an obvious format implied by the field name.
-- Use the appropriate language for the requested content.
-- Do not invent information that cannot be reliably determined.
-- Do not fill a field with irrelevant text just to avoid leaving it empty.
-- If the purpose of a field cannot be determined reliably, return an empty string.
-
-Custom fields are dynamic.
-Do not assume a fixed set of custom fields.
-Do not assume that a field exists unless it is provided by the application.
-
-CONTEXT
-
-Use context to determine:
-- the intended meaning;
-- grammatical usage;
-- the appropriate dictionary form;
-- the example.
-
-Only the provided word is the vocabulary target.
-
-Do not treat other words from the context as additional targets.
-
-Do not replace the target with another word from the context.
-
-GENERAL
-
-Apply language-specific grammar, morphology, capitalization, and pronunciation rules appropriate to the configured source language.
-
-Keep every field concise.
-
-Do not add information that does not belong to the field.
-
-Do not invent facts, meanings, pronunciations, or context.
-
-Use the context when it provides relevant information, but use normal language knowledge for dictionary form, grammar, and pronunciation.
-
-Return only the structured card data.
+Return only the structured JSON object.
 """.strip()
 
 
-def play_sound(success):
+def play_sound(
+    success
+):
     sound_path = (
         SUCCESS_SOUND
         if success
@@ -298,15 +202,19 @@ def call_anki(
         ) as response:
 
             data = json.loads(
-                response.read().decode("utf-8")
+                response.read().decode(
+                    "utf-8"
+                )
             )
 
     except urllib.error.HTTPError as e:
+
         try:
             body = e.read().decode(
                 "utf-8",
                 errors="replace"
             )
+
         except Exception:
             body = str(e)
 
@@ -316,12 +224,14 @@ def call_anki(
         )
 
     except urllib.error.URLError as e:
+
         raise RuntimeError(
             f"AnkiConnect connection error: "
             f"{e.reason}"
         )
 
     except Exception as e:
+
         raise RuntimeError(
             f"AnkiConnect error: {e}"
         )
@@ -338,7 +248,9 @@ def call_anki(
         "error"
     ):
         raise RuntimeError(
-            str(data["error"])
+            str(
+                data["error"]
+            )
         )
 
     return data.get(
@@ -374,28 +286,14 @@ def get_llm_client(
 ):
     return OpenAI(
         base_url=(
-            get_llm_base_url(settings)
+            get_llm_base_url(
+                settings
+            )
             + "/v1"
         ),
         api_key="lm-studio",
         timeout=90
     )
-
-
-def get_source_language(
-    settings
-):
-    language = str(
-        settings.get(
-            "language",
-            "English"
-        )
-    ).strip()
-
-    if not language:
-        language = "English"
-
-    return language
 
 
 def get_model(
@@ -409,6 +307,7 @@ def get_model(
     ).strip()
 
     if configured_model:
+
         print(
             f"Card: configured model = "
             f"{configured_model}"
@@ -417,7 +316,9 @@ def get_model(
         return configured_model
 
     api_url = (
-        get_llm_base_url(settings)
+        get_llm_base_url(
+            settings
+        )
         + "/api/v1/models"
     )
 
@@ -432,10 +333,13 @@ def get_model(
         ) as response:
 
             data = json.loads(
-                response.read().decode("utf-8")
+                response.read().decode(
+                    "utf-8"
+                )
             )
 
     except Exception as e:
+
         raise RuntimeError(
             f"Could not read LM Studio models: {e}"
         )
@@ -461,6 +365,7 @@ def get_model(
             )
 
             if not model_key:
+
                 raise RuntimeError(
                     "Loaded LM Studio model has no key"
                 )
@@ -475,6 +380,188 @@ def get_model(
     raise RuntimeError(
         "No LM Studio LLM is currently loaded"
     )
+
+
+def get_language_profiles(
+    settings
+):
+    raw_profiles = settings.get(
+        "language_profiles"
+    )
+
+    profiles = {}
+
+    if isinstance(
+        raw_profiles,
+        dict
+    ):
+
+        for language, profile in raw_profiles.items():
+
+            language = str(
+                language
+            ).strip()
+
+            if not language:
+                continue
+
+            if not isinstance(
+                profile,
+                dict
+            ):
+                continue
+
+            translation_language = str(
+                profile.get(
+                    "translation_language",
+                    ""
+                )
+            ).strip()
+
+            deck = str(
+                profile.get(
+                    "deck",
+                    ""
+                )
+            ).strip()
+
+            if (
+                not translation_language
+                or not deck
+            ):
+                continue
+
+            profiles[language] = {
+                "translation_language": translation_language,
+                "deck": deck
+            }
+
+    if profiles:
+        return profiles
+
+    legacy_language = str(
+        settings.get(
+            "language",
+            ""
+        )
+    ).strip()
+
+    legacy_translation = str(
+        settings.get(
+            "translation_language",
+            ""
+        )
+    ).strip()
+
+    legacy_deck = str(
+        settings.get(
+            "deck",
+            ""
+        )
+    ).strip()
+
+    if (
+        legacy_language
+        and legacy_translation
+        and legacy_deck
+    ):
+        profiles[legacy_language] = {
+            "translation_language": legacy_translation,
+            "deck": legacy_deck
+        }
+
+    if not profiles:
+        raise RuntimeError(
+            "No valid language profiles configured"
+        )
+
+    return profiles
+
+
+def find_profile(
+    profiles,
+    language
+):
+    language = str(
+        language or ""
+    ).strip()
+
+    for profile_language in profiles:
+
+        if (
+            profile_language.casefold()
+            ==
+            language.casefold()
+        ):
+            return profile_language
+
+    return None
+
+
+def get_profile_translation(
+    profiles,
+    language
+):
+    profile_language = find_profile(
+        profiles,
+        language
+    )
+
+    if not profile_language:
+        raise RuntimeError(
+            f"Language profile not found: "
+            f"{language}"
+        )
+
+    translation_language = str(
+        profiles[
+            profile_language
+        ].get(
+            "translation_language",
+            ""
+        )
+    ).strip()
+
+    if not translation_language:
+        raise RuntimeError(
+            f"Translation language is empty "
+            f"for profile '{profile_language}'"
+        )
+
+    return translation_language
+
+
+def get_profile_deck(
+    profiles,
+    language
+):
+    profile_language = find_profile(
+        profiles,
+        language
+    )
+
+    if not profile_language:
+        raise RuntimeError(
+            f"Language profile not found: "
+            f"{language}"
+        )
+
+    deck = str(
+        profiles[
+            profile_language
+        ].get(
+            "deck",
+            ""
+        )
+    ).strip()
+
+    if not deck:
+        raise RuntimeError(
+            f"Deck is empty for profile "
+            f"'{profile_language}'"
+        )
+
+    return deck
 
 
 def extract_json(
@@ -501,13 +588,16 @@ def extract_json(
 
         if (
             lines
-            and lines[0].startswith("```")
+            and lines[0].startswith(
+                "```"
+            )
         ):
             lines = lines[1:]
 
         if (
             lines
-            and lines[-1].strip() == "```"
+            and lines[-1].strip()
+            == "```"
         ):
             lines = lines[:-1]
 
@@ -540,7 +630,10 @@ def extract_json(
 
     try:
         return json.loads(
-            text[start:end + 1]
+            text[
+                start:
+                end + 1
+            ]
         )
 
     except json.JSONDecodeError:
@@ -557,6 +650,7 @@ def llm_chat(
     schema_name
 ):
     try:
+
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -610,18 +704,7 @@ def llm_chat(
     fallback_prompt = (
         system_prompt
         + "\n\n"
-        "OUTPUT FORMAT:\n"
-        "Return exactly one JSON object and nothing else.\n"
-        "Use exactly these top-level fields:\n"
-        + json.dumps(
-            list(
-                response_schema.get(
-                    "properties",
-                    {}
-                ).keys()
-            ),
-            ensure_ascii=False
-        )
+        "Return exactly one JSON object and nothing else."
     )
 
     response = client.chat.completions.create(
@@ -659,26 +742,268 @@ def llm_chat(
     return content
 
 
-def as_bool(
-    value
+def detect_by_unicode(
+    text,
+    profiles
 ):
-    if isinstance(
-        value,
-        bool
-    ):
-        return value
+    if not text:
+        return None
 
-    return (
-        str(value)
-        .strip()
-        .lower()
-        in {
-            "1",
-            "true",
-            "yes",
-            "on"
-        }
+    available = {
+        language.casefold(): language
+        for language in profiles
+    }
+
+    japanese = (
+        "\u3040" <= char <= "\u30ff"
+        or "\u31f0" <= char <= "\u31ff"
+        for char in text
     )
+
+    if any(
+        japanese
+    ):
+
+        if "japanese" in available:
+            return available["japanese"]
+
+    korean = (
+        "\uac00" <= char <= "\ud7af"
+        or "\u1100" <= char <= "\u11ff"
+        for char in text
+    )
+
+    if any(
+        korean
+    ):
+
+        if "korean" in available:
+            return available["korean"]
+
+    cyrillic_count = sum(
+        1
+        for char in text
+        if "\u0400" <= char <= "\u04ff"
+    )
+
+    if cyrillic_count:
+
+        has_ukrainian = any(
+            char.lower() in {
+                "ї",
+                "і",
+                "є",
+                "ґ"
+            }
+            for char in text
+        )
+
+        if (
+            has_ukrainian
+            and "ukrainian" in available
+        ):
+            return available["ukrainian"]
+
+        if "russian" in available:
+            return available["russian"]
+
+        if "ukrainian" in available:
+            return available["ukrainian"]
+
+    greek_count = sum(
+        1
+        for char in text
+        if "\u0370" <= char <= "\u03ff"
+    )
+
+    if greek_count:
+
+        if "greek" in available:
+            return available["greek"]
+
+    hebrew_count = sum(
+        1
+        for char in text
+        if "\u0590" <= char <= "\u05ff"
+    )
+
+    if hebrew_count:
+
+        if "hebrew" in available:
+            return available["hebrew"]
+
+    arabic_count = sum(
+        1
+        for char in text
+        if "\u0600" <= char <= "\u06ff"
+    )
+
+    if arabic_count:
+
+        if "arabic" in available:
+            return available["arabic"]
+
+    han_count = sum(
+        1
+        for char in text
+        if "\u3400" <= char <= "\u9fff"
+    )
+
+    if han_count:
+
+        if "chinese (simplified)" in available:
+            return available["chinese (simplified)"]
+
+        if "chinese (traditional)" in available:
+            return available["chinese (traditional)"]
+
+    return None
+
+
+def build_detection_schema(
+    profiles
+):
+    languages = list(
+        profiles.keys()
+    )
+
+    return {
+        "type": "object",
+        "properties": {
+            "detected_language": {
+                "type": "string",
+                "enum": languages
+            }
+        },
+        "required": [
+            "detected_language"
+        ],
+        "additionalProperties": False
+    }
+
+
+def detect_source_language(
+    client,
+    model,
+    word,
+    context,
+    profiles
+):
+    if len(
+        profiles
+    ) == 1:
+
+        language = next(
+            iter(
+                profiles
+            )
+        )
+
+        print(
+            f"Card: only profile available = "
+            f"{language}"
+        )
+
+        return language
+
+    combined_text = (
+        word
+        + "\n"
+        + context
+    )
+
+    unicode_language = detect_by_unicode(
+        combined_text,
+        profiles
+    )
+
+    if unicode_language:
+
+        print(
+            f"Card: Unicode language detection = "
+            f"{unicode_language}"
+        )
+
+        return unicode_language
+
+    profile_names = list(
+        profiles.keys()
+    )
+
+    prompt = """
+Determine the SOURCE LANGUAGE of TARGET WORD and CONTEXT.
+
+Choose exactly one language from the configured language profiles.
+
+Do not use the language of this instruction.
+Do not use the user's language.
+Do not guess from translation preferences.
+
+The answer must describe the language of the vocabulary being learned.
+"""
+
+    user_content = (
+        "CONFIGURED LANGUAGES:\n"
+        + "\n".join(
+            f"- {language}"
+            for language in profile_names
+        )
+        + "\n\n"
+        "TARGET WORD:\n"
+        + word
+        + "\n\n"
+        "CONTEXT:\n"
+        + context
+    )
+
+    raw = llm_chat(
+        client,
+        model,
+        prompt,
+        user_content,
+        100,
+        build_detection_schema(
+            profiles
+        ),
+        "language_detection"
+    )
+
+    data = extract_json(
+        raw
+    )
+
+    if not isinstance(
+        data,
+        dict
+    ):
+        raise RuntimeError(
+            "Language detection returned invalid JSON"
+        )
+
+    detected = str(
+        data.get(
+            "detected_language",
+            ""
+        )
+    ).strip()
+
+    profile_language = find_profile(
+        profiles,
+        detected
+    )
+
+    if not profile_language:
+        raise RuntimeError(
+            "Language detection returned "
+            f"unconfigured language: {detected}"
+        )
+
+    print(
+        f"Card: LLM language detection = "
+        f"{profile_language}"
+    )
+
+    return profile_language
 
 
 def validate_custom_fields(
@@ -724,12 +1049,14 @@ def validate_custom_fields(
             continue
 
         if field_id in seen_ids:
+
             raise RuntimeError(
                 f"Duplicate custom field id: "
                 f"'{field_id}'"
             )
 
         if field_name in seen_names:
+
             raise RuntimeError(
                 f"Duplicate custom field name: "
                 f"'{field_name}'"
@@ -744,8 +1071,62 @@ def validate_custom_fields(
         )
 
 
+def get_custom_field_instruction(
+    field,
+    source_language,
+    translation_language
+):
+    field_id = str(
+        field.get(
+            "id",
+            ""
+        )
+    ).strip()
+
+    field_name = str(
+        field.get(
+            "name",
+            ""
+        )
+    ).strip()
+
+    if field_id == "custom_description":
+
+        return (
+            "Write a short dictionary-style definition "
+            f"of FRONT entirely in SOURCE LANGUAGE: "
+            f"{source_language}. "
+            "Do not translate FRONT. "
+            "Do not repeat FRONT. "
+            "Do not mention the context, card, or field."
+        )
+
+    if field_id == "custom_transcription":
+
+        return (
+            "Return ONLY the IPA pronunciation of FRONT "
+            f"in SOURCE LANGUAGE: {source_language}. "
+            "Use /slashes/. "
+            "Never return spelling, square brackets, "
+            "labels, explanations, or notes."
+        )
+
+    return (
+        f"Custom field name: {field_name}. "
+        "Infer its purpose from the human-readable name. "
+        "Return only the requested content. "
+        "Keep it concise. "
+        "Do not duplicate information from other fields. "
+        f"If translation is explicitly requested, use "
+        f"TRANSLATION LANGUAGE: {translation_language}. "
+        "If its purpose is genuinely unclear, return an empty string."
+    )
+
+
 def build_custom_field_info(
-    custom_fields
+    custom_fields,
+    source_language,
+    translation_language
 ):
     lines = []
     properties = {}
@@ -779,20 +1160,14 @@ def build_custom_field_info(
         ):
             continue
 
-        instruction = (
-            "Infer the intended content from the "
-            "configured field name. Return only the "
-            "value that belongs in this field. Keep "
-            "it concise, relevant, and useful. Do "
-            "not duplicate other card fields, do not "
-            "add labels or explanations, and do not "
-            "invent information. Follow any obvious "
-            "format or language implied by the field name."
+        instruction = get_custom_field_instruction(
+            field,
+            source_language,
+            translation_language
         )
 
         lines.append(
-            f"{field_id} ({field_name}): "
-            f"{instruction}"
+            f"{field_id} ({field_name}): {instruction}"
         )
 
         properties[field_id] = {
@@ -812,96 +1187,58 @@ def build_custom_field_info(
 
 
 def build_schema(
-    custom_fields,
-    include_correction
+    custom_fields
 ):
     (
         _,
         custom_properties,
         custom_required
     ) = build_custom_field_info(
-        custom_fields
+        custom_fields,
+        "SOURCE LANGUAGE",
+        "TRANSLATION LANGUAGE"
     )
 
-    properties = {}
-    required = []
-
-    if include_correction:
-
-        properties["corrected_word"] = {
-            "type": "string",
-            "description": (
-                "The target word after correcting "
-                "only obvious OCR errors."
-            )
-        }
-
-        properties["corrected_context"] = {
-            "type": "string",
-            "description": (
-                "The context after correcting "
-                "only obvious OCR errors."
-            )
-        }
-
-        required.extend(
-            [
-                "corrected_word",
-                "corrected_context"
-            ]
-        )
-
-    properties["front"] = {
-        "type": "string",
-        "description": (
-            "The standard dictionary form or "
-            "fixed expression in the source language."
-        )
-    }
-
-    properties["back"] = {
-        "type": "string",
-        "description": (
-            "Exactly one natural English translation "
-            "of FRONT matching the context."
-        )
-    }
-
-    properties["example"] = {
-        "type": "string",
-        "description": (
-            "One short natural example in the source language."
-        )
-    }
-
-    properties["tag"] = {
-        "type": "string",
-        "description": (
-            "Exactly one allowed part-of-speech tag."
-        )
-    }
-
-    properties["custom"] = {
+    return {
         "type": "object",
-        "properties": custom_properties,
-        "required": custom_required,
-        "additionalProperties": False
-    }
-
-    required.extend(
-        [
+        "properties": {
+            "corrected_word": {
+                "type": "string"
+            },
+            "corrected_context": {
+                "type": "string"
+            },
+            "front": {
+                "type": "string"
+            },
+            "back": {
+                "type": "string"
+            },
+            "example": {
+                "type": "string"
+            },
+            "tag": {
+                "type": "string",
+                "enum": sorted(
+                    ALLOWED_TAGS
+                )
+            },
+            "custom": {
+                "type": "object",
+                "properties": custom_properties,
+                "required": custom_required,
+                "additionalProperties": False
+            }
+        },
+        "required": [
+            "corrected_word",
+            "corrected_context",
             "front",
             "back",
             "example",
             "tag",
             "custom"
-        ]
-    )
-
-    return {
-        "type": "object",
-        "properties": properties,
-        "required": required,
+        ],
         "additionalProperties": False
     }
 
@@ -909,103 +1246,116 @@ def build_schema(
 def build_system_prompt(
     settings,
     custom_fields,
+    source_language,
+    translation_language,
     ocr_correction
 ):
-    source_language = (
-        get_source_language(
-            settings
-        )
-    )
-
-    system_prompt = DEFAULT_PROMPT
-
-    custom_prompt = str(
+    saved_prompt = str(
         settings.get(
             "prompt",
             ""
         )
     ).strip()
 
-    if custom_prompt:
-        system_prompt += (
-            "\n\nADDITIONAL USER INSTRUCTIONS:\n"
-            + custom_prompt
-            + "\n\n"
-            "Additional instructions may refine the "
-            "content, but they must not change the "
-            "configured source language, English "
-            "translation language, required fields, "
-            "or structured output format."
-        )
-
-    system_prompt += (
-        "\n\n"
-        "ACTIVE LANGUAGE CONFIGURATION:\n"
-        f"Source language: {source_language}\n"
-        f"Translation language: {TRANSLATION_LANGUAGE}"
-    )
+    if not saved_prompt:
+        saved_prompt = DEFAULT_PROMPT
 
     (
         custom_lines,
         _,
         _
     ) = build_custom_field_info(
-        custom_fields
+        custom_fields,
+        source_language,
+        translation_language
     )
 
     if custom_lines:
-        system_prompt += (
-            "\n\n"
-            "CONFIGURED CUSTOM FIELDS:\n"
-            + "\n".join(
-                custom_lines
-            )
+        custom_text = "\n".join(
+            custom_lines
         )
+    else:
+        custom_text = "(none)"
+
+    current_rules = f"""
+CURRENT CARD SETTINGS
+
+SOURCE LANGUAGE:
+{source_language}
+
+TRANSLATION LANGUAGE:
+{translation_language}
+
+These values are authoritative for this card.
+
+The saved user prompt below is supplemental guidance only.
+
+If the saved prompt contains examples or rules referring to a different language pair, those old examples MUST NOT override the current settings above.
+
+FRONT:
+Must be entirely in {source_language}.
+
+BACK:
+Must be entirely in {translation_language}.
+
+Never use Russian for BACK unless the current TRANSLATION LANGUAGE is Russian.
+
+EXAMPLE:
+Must be entirely in {source_language}.
+
+CUSTOM FIELDS:
+{custom_text}
+
+custom_description:
+Entirely in {source_language}.
+
+custom_transcription:
+IPA pronunciation for {source_language} only.
+
+TAG:
+Exactly one allowed tag.
+
+OCR CORRECTION:
+"""
 
     if ocr_correction:
-
-        system_prompt += """
-        
-OCR CORRECTION
-
-Correct only obvious OCR errors in the provided word and context.
-
-Fix clear:
-- incorrect characters;
-- missing characters;
-- duplicated characters;
-- obvious spacing mistakes;
-- obvious OCR spelling errors.
-
-Do not:
-- translate the text;
-- paraphrase it;
-- rewrite it stylistically;
-- change its meaning;
-- invent uncertain text.
-
-Preserve the original source language and wording as closely as possible.
-
-Use the corrected text for card generation.
-""".strip()
-
+        current_rules += """
+Correct only obvious OCR errors.
+Preserve normal wording and meaning.
+"""
     else:
+        current_rules += """
+Do not correct the supplied target or context.
+"""
 
-        system_prompt += """
-        
-OCR CORRECTION
+    current_rules += """
+FINAL CHECK BEFORE RETURNING JSON
 
-OCR correction is disabled.
+Check the language of every field.
 
-Use the provided word and context exactly as supplied.
-Do not correct, rewrite, normalize, or paraphrase them.
+FRONT = SOURCE LANGUAGE
+BACK = TRANSLATION LANGUAGE
+EXAMPLE = SOURCE LANGUAGE
+custom_description = SOURCE LANGUAGE
+custom_transcription = SOURCE LANGUAGE pronunciation
 
-Generate the card directly from the provided text.
-""".strip()
+If BACK is in the wrong language, correct it before returning JSON.
+
+Do not translate the whole context when generating BACK.
+
+Translate FRONT itself.
+
+Return only the structured JSON object.
+"""
 
     return (
-        system_prompt,
-        source_language
+        "SUPPLEMENTAL USER PROMPT\n"
+        "========================\n"
+        + saved_prompt
+        + "\n\n"
+        "AUTHORITATIVE RUNTIME RULES\n"
+        "===========================\n"
+        + current_rules.strip()
     )
 
 
@@ -1027,51 +1377,264 @@ def clean_example(
     return example
 
 
+def has_cyrillic(
+    text
+):
+    return any(
+        "\u0400" <= char <= "\u04ff"
+        for char in str(
+            text
+        )
+    )
+
+
+def has_latin(
+    text
+):
+    return any(
+        ("A" <= char <= "Z")
+        or ("a" <= char <= "z")
+        for char in str(
+            text
+        )
+    )
+
+
+def has_japanese(
+    text
+):
+    return any(
+        (
+            "\u3040" <= char <= "\u30ff"
+            or "\u31f0" <= char <= "\u31ff"
+        )
+        for char in str(
+            text
+        )
+    )
+
+
+def validate_back_language(
+    back,
+    translation_language
+):
+    text = str(
+        back
+    ).strip()
+
+    if not text:
+        return False
+
+    language = translation_language.casefold()
+
+    if language == "russian":
+        return has_cyrillic(
+            text
+        )
+
+    if language == "ukrainian":
+        return has_cyrillic(
+            text
+        )
+
+    if language == "bulgarian":
+        return has_cyrillic(
+            text
+        )
+
+    if language == "serbian":
+        return has_cyrillic(
+            text
+        )
+
+    if language == "japanese":
+        return has_japanese(
+            text
+        )
+
+    if language == "korean":
+        return any(
+            "\uac00" <= char <= "\ud7af"
+            for char in text
+        )
+
+    if language in {
+        "english",
+        "german",
+        "french",
+        "spanish",
+        "italian",
+        "portuguese",
+        "dutch",
+        "polish",
+        "czech",
+        "slovak",
+        "hungarian",
+        "romanian",
+        "swedish",
+        "norwegian",
+        "danish",
+        "finnish",
+        "turkish"
+    }:
+        return has_latin(
+            text
+        )
+
+    return True
+
+
+def build_repair_prompt(
+    source_language,
+    translation_language,
+    front,
+    back
+):
+    return f"""
+Repair this Anki translation.
+
+SOURCE LANGUAGE:
+{source_language}
+
+TRANSLATION LANGUAGE:
+{translation_language}
+
+FRONT:
+{front}
+
+CURRENT BACK:
+{back}
+
+The BACK is in the wrong language.
+
+Replace BACK with exactly one concise natural translation of FRONT into {translation_language}.
+
+Do not add synonyms.
+Do not add explanations.
+Do not add parentheses.
+Do not include FRONT.
+
+Return only JSON:
+{{
+  "back": "..."
+}}
+""".strip()
+
+
+def repair_back(
+    client,
+    model,
+    source_language,
+    translation_language,
+    front,
+    back
+):
+    schema = {
+        "type": "object",
+        "properties": {
+            "back": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "back"
+        ],
+        "additionalProperties": False
+    }
+
+    raw = llm_chat(
+        client,
+        model,
+        build_repair_prompt(
+            source_language,
+            translation_language,
+            front,
+            back
+        ),
+        (
+            "Repair the translation exactly as requested."
+        ),
+        150,
+        schema,
+        "translation_repair"
+    )
+
+    data = extract_json(
+        raw
+    )
+
+    if not isinstance(
+        data,
+        dict
+    ):
+        raise RuntimeError(
+            "Translation repair returned invalid JSON"
+        )
+
+    repaired = str(
+        data.get(
+            "back",
+            ""
+        )
+    ).strip()
+
+    if not repaired:
+        raise RuntimeError(
+            "Translation repair returned empty BACK"
+        )
+
+    return repaired
+
+
 def generate_card(
     client,
     model,
     word,
     context,
     settings,
-    custom_fields
+    custom_fields,
+    source_language,
+    translation_language
 ):
-    ocr_correction = as_bool(
+    ocr_correction = (
         settings.get(
             "ocr_correction",
             False
         )
+        is True
     )
 
-    (
-        system_prompt,
-        source_language
-    ) = build_system_prompt(
+    system_prompt = build_system_prompt(
         settings,
         custom_fields,
+        source_language,
+        translation_language,
         ocr_correction
     )
 
-    print(
-        f"Card: source language = "
-        f"{source_language}"
-    )
+    user_content = f"""
+CURRENT SOURCE LANGUAGE:
+{source_language}
 
-    print(
-        f"Card: translation language = "
-        f"{TRANSLATION_LANGUAGE}"
-    )
+CURRENT TRANSLATION LANGUAGE:
+{translation_language}
 
-    user_content = (
-        "TARGET WORD:\n"
-        + word
-        + "\n\n"
-        "CONTEXT:\n"
-        + context
-    )
+TARGET WORD:
+{word}
+
+CONTEXT:
+{context}
+
+Generate one card using ONLY the current language settings above.
+
+BACK MUST be written in:
+{translation_language}
+
+Do not use Russian unless TRANSLATION LANGUAGE is Russian.
+""".strip()
 
     schema = build_schema(
-        custom_fields,
-        ocr_correction
+        custom_fields
     )
 
     raw = llm_chat(
@@ -1079,7 +1642,7 @@ def generate_card(
         model,
         system_prompt,
         user_content,
-        1400,
+        1800,
         schema,
         "anki_card"
     )
@@ -1093,12 +1656,9 @@ def generate_card(
         dict
     ):
         raise RuntimeError(
-            "LLM returned invalid card JSON: "
-            + raw[:500]
+            "LLM returned invalid JSON:\n"
+            + raw[:1000]
         )
-
-    corrected_word = word
-    corrected_context = context
 
     if ocr_correction:
 
@@ -1122,7 +1682,25 @@ def generate_card(
         if not corrected_context:
             corrected_context = context
 
+    else:
+
+        corrected_word = word
+        corrected_context = context
+
+    custom_data = data.get(
+        "custom",
+        {}
+    )
+
+    if not isinstance(
+        custom_data,
+        dict
+    ):
+        custom_data = {}
+
     result = {
+        "source_language": source_language,
+        "translation_language": translation_language,
         "corrected_word": corrected_word,
         "corrected_context": corrected_context,
         "front": str(
@@ -1152,17 +1730,6 @@ def generate_card(
         "custom": {}
     }
 
-    custom_data = data.get(
-        "custom",
-        {}
-    )
-
-    if not isinstance(
-        custom_data,
-        dict
-    ):
-        custom_data = {}
-
     for field in custom_fields:
 
         if not isinstance(
@@ -1190,26 +1757,21 @@ def generate_card(
 
     if not result["front"]:
         raise RuntimeError(
-            "LLM returned empty front"
+            "LLM returned empty FRONT"
         )
 
     if not result["back"]:
         raise RuntimeError(
-            "LLM returned empty back"
+            "LLM returned empty BACK"
         )
 
     if (
-        result["front"]
-        .strip()
-        .casefold()
+        result["front"].casefold()
         ==
-        result["back"]
-        .strip()
-        .casefold()
+        result["back"].casefold()
     ):
         raise RuntimeError(
-            "LLM returned FRONT as BACK "
-            "instead of an English translation"
+            "LLM returned FRONT as BACK"
         )
 
     if result["tag"] not in ALLOWED_TAGS:
@@ -1217,6 +1779,53 @@ def generate_card(
             f"LLM returned invalid tag: "
             f"{result['tag']}"
         )
+
+    if not validate_back_language(
+        result["back"],
+        translation_language
+    ):
+
+        print(
+            "Card: BACK language check failed"
+        )
+
+        print(
+            f"Card: expected BACK language = "
+            f"{translation_language}"
+        )
+
+        print(
+            f"Card: received BACK = "
+            f"{result['back']}"
+        )
+
+        result["back"] = repair_back(
+            client,
+            model,
+            source_language,
+            translation_language,
+            result["front"],
+            result["back"]
+        )
+
+        if not validate_back_language(
+            result["back"],
+            translation_language
+        ):
+            raise RuntimeError(
+                "BACK is still in the wrong language "
+                f"after repair: {result['back']}"
+            )
+
+    print(
+        f"Card: source language = "
+        f"{source_language}"
+    )
+
+    print(
+        f"Card: translation language = "
+        f"{translation_language}"
+    )
 
     return result
 
@@ -1250,8 +1859,7 @@ def get_configured_field_name(
 
         if required:
             raise RuntimeError(
-                f"Field setting "
-                f"'{field_id}' is missing"
+                f"Field setting '{field_id}' is missing"
             )
 
         return None
@@ -1267,18 +1875,17 @@ def get_configured_field_name(
 
         if required:
             raise RuntimeError(
-                f"Field '{field_id}' "
-                f"has no configured name"
+                f"Field '{field_id}' has no configured name"
             )
 
         return None
 
     if name not in model_fields:
+
         raise RuntimeError(
-            f"Configured Anki field "
-            f"'{name}' for '{field_id}' "
-            f"was not found. "
-            f"Available: {model_fields}"
+            f"Configured field '{name}' for "
+            f"'{field_id}' was not found in Anki. "
+            f"Available fields: {model_fields}"
         )
 
     return name
@@ -1316,11 +1923,11 @@ def build_anki_fields(
 
     if len(
         set(core_names)
-    ) != len(core_names):
-
+    ) != len(
+        core_names
+    ):
         raise RuntimeError(
-            "Front, Back and Example point "
-            "to the same Anki field: "
+            "Front, Back and Example use duplicate Anki fields: "
             f"{core_names}"
         )
 
@@ -1329,10 +1936,6 @@ def build_anki_fields(
         back_name: card["back"],
         example_name: card["example"]
     }
-
-    reserved_names = set(
-        core_names
-    )
 
     custom_values = card.get(
         "custom",
@@ -1367,25 +1970,19 @@ def build_anki_fields(
         ):
             continue
 
-        if field_name in reserved_names:
+        if field_name in fields:
+
             raise RuntimeError(
-                f"Custom field "
-                f"'{field_name}' "
-                "conflicts with a core field"
+                f"Duplicate Anki field mapping: "
+                f"{field_name}"
             )
 
         if field_name not in model_fields:
-            raise RuntimeError(
-                f"Configured custom field "
-                f"'{field_name}' was not found "
-                f"in Anki. Available: "
-                f"{model_fields}"
-            )
 
-        if field_name in fields:
             raise RuntimeError(
-                f"Duplicate Anki field mapping: "
-                f"'{field_name}'"
+                f"Custom Anki field '{field_name}' "
+                f"was not found. Available fields: "
+                f"{model_fields}"
             )
 
         fields[field_name] = str(
@@ -1428,8 +2025,7 @@ def attach_image(
     fields,
     settings,
     model_fields,
-    image_path,
-    reserved_names
+    image_path
 ):
     if not image_path:
         return
@@ -1444,11 +2040,11 @@ def attach_image(
     if not picture_name:
         return
 
-    if picture_name in reserved_names:
+    if picture_name in fields:
+
         raise RuntimeError(
-            f"Picture field "
-            f"'{picture_name}' conflicts "
-            "with another configured field"
+            f"Picture field '{picture_name}' "
+            "conflicts with another field"
         )
 
     filename = store_image(
@@ -1456,6 +2052,7 @@ def attach_image(
     )
 
     if filename:
+
         fields[picture_name] = (
             f'<img src="{filename}">'
         )
@@ -1468,10 +2065,8 @@ def parse_tags(
         tag_text
     ).strip().lower()
 
-    if (
-        tag
-        and tag != "auto"
-    ):
+    if tag and tag != "auto":
+
         return [
             "auto",
             tag
@@ -1485,6 +2080,7 @@ def parse_tags(
 def add_card(
     card,
     settings,
+    selected_profile,
     image_path
 ):
     note_model = str(
@@ -1494,21 +2090,23 @@ def add_card(
         )
     ).strip()
 
+    if not note_model:
+
+        raise RuntimeError(
+            "Setting 'note_model' is empty"
+        )
+
     deck_name = str(
-        settings.get(
+        selected_profile.get(
             "deck",
             ""
         )
     ).strip()
 
-    if not note_model:
-        raise RuntimeError(
-            "Setting 'note_model' is empty"
-        )
-
     if not deck_name:
+
         raise RuntimeError(
-            "Setting 'deck' is empty"
+            "Selected language profile has no deck"
         )
 
     model_fields = call_anki(
@@ -1525,6 +2123,7 @@ def add_card(
         )
         or not model_fields
     ):
+
         raise RuntimeError(
             "Could not read Anki model fields"
         )
@@ -1545,16 +2144,11 @@ def add_card(
         custom_fields
     )
 
-    reserved_names = set(
-        fields.keys()
-    )
-
     attach_image(
         fields,
         settings,
         model_fields,
-        image_path,
-        reserved_names
+        image_path
     )
 
     note = {
@@ -1578,7 +2172,9 @@ def add_card(
     check = call_anki(
         "canAddNotesWithErrorDetail",
         {
-            "notes": [note]
+            "notes": [
+                note
+            ]
         }
     )
 
@@ -1586,6 +2182,7 @@ def add_card(
         check,
         list
     ):
+
         check = (
             check[0]
             if check
@@ -1599,10 +2196,19 @@ def add_card(
         check,
         dict
     ):
+
         raise RuntimeError(
-            f"Invalid canAddNotes response: "
+            f"Invalid Anki validation response: "
             f"{check}"
         )
+
+    print(
+        f"Card: deck = {deck_name}"
+    )
+
+    print(
+        f"Card: note type = {note_model}"
+    )
 
     print(
         f"Card: can add = {check}"
@@ -1611,13 +2217,15 @@ def add_card(
     if not check.get(
         "canAdd"
     ):
-        error = (
-            check.get("error")
-            or "Anki rejected the note"
-        )
 
         print(
-            f"Card: not added = {error}"
+            "Card: not added = "
+            + str(
+                check.get(
+                    "error",
+                    "Anki rejected the note"
+                )
+            )
         )
 
         return False
@@ -1630,13 +2238,13 @@ def add_card(
     )
 
     if not note_id:
+
         raise RuntimeError(
             "Anki returned no note ID"
         )
 
     print(
-        f"Card: added to Anki = "
-        f"{note_id}"
+        f"Card: added to Anki = {note_id}"
     )
 
     return True
@@ -1644,13 +2252,15 @@ def add_card(
 
 def main():
     try:
+
         payload = json.load(
             sys.stdin
         )
 
     except Exception as e:
+
         print(
-            f"Card: input JSON error: {e}"
+            f"Card: input JSON error = {e}"
         )
 
         play_sound(False)
@@ -1661,6 +2271,7 @@ def main():
         payload,
         dict
     ):
+
         print(
             "Card: invalid input JSON"
         )
@@ -1691,6 +2302,7 @@ def main():
     ).strip()
 
     if not word:
+
         print(
             "Card: empty word"
         )
@@ -1708,7 +2320,12 @@ def main():
     )
 
     try:
+
         settings = load_settings()
+
+        profiles = get_language_profiles(
+            settings
+        )
 
         custom_fields = settings.get(
             "custom_fields",
@@ -1719,6 +2336,11 @@ def main():
             custom_fields
         )
 
+        print(
+            "Card: configured language profiles = "
+            f"{profiles}"
+        )
+
         client = get_llm_client(
             settings
         )
@@ -1727,9 +2349,43 @@ def main():
             settings
         )
 
+        source_language = detect_source_language(
+            client,
+            model,
+            word,
+            context,
+            profiles
+        )
+
+        translation_language = (
+            get_profile_translation(
+                profiles,
+                source_language
+            )
+        )
+
+        selected_profile_name = find_profile(
+            profiles,
+            source_language
+        )
+
+        selected_profile = profiles[
+            selected_profile_name
+        ]
+
         print(
-            f"Card: custom fields = "
-            f"{custom_fields}"
+            f"Card: detected language = "
+            f"{source_language}"
+        )
+
+        print(
+            f"Card: profile translation = "
+            f"{translation_language}"
+        )
+
+        print(
+            f"Card: profile deck = "
+            f"{selected_profile['deck']}"
         )
 
         card = generate_card(
@@ -1738,7 +2394,9 @@ def main():
             word,
             context,
             settings,
-            custom_fields
+            custom_fields,
+            source_language,
+            translation_language
         )
 
         print(
@@ -1759,6 +2417,7 @@ def main():
         success = add_card(
             card,
             settings,
+            selected_profile,
             image_path
         )
 
@@ -1775,7 +2434,7 @@ def main():
     except Exception as e:
 
         print(
-            f"Card: ERROR: {e}"
+            f"Card: ERROR = {e}"
         )
 
         play_sound(False)

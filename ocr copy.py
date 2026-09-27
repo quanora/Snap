@@ -1,5 +1,6 @@
 import os
 import subprocess
+import warnings
 import re
 import cv2
 from PIL import Image
@@ -14,13 +15,6 @@ except ImportError:
     Quartz = None
 
 try:
-    import Vision
-    import Foundation
-except ImportError:
-    Vision = None
-    Foundation = None
-
-try:
     from ApplicationServices import (
         AXIsProcessTrustedWithOptions,
         kAXTrustedCheckOptionPrompt
@@ -28,6 +22,12 @@ try:
 except ImportError:
     AXIsProcessTrustedWithOptions = None
     kAXTrustedCheckOptionPrompt = None
+
+
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning
+)
 
 
 current_dir = os.path.dirname(
@@ -69,32 +69,16 @@ ALL_LANGUAGE_CODES = {
 }
 
 
-VISION_LANGUAGE_CODES = {
-    "en": "en",
-    "de": "de",
-    "ru": "ru",
-    "es": "es",
-    "fr": "fr",
-    "it": "it",
-    "pt": "pt",
-    "ch_sim": "zh-Hans",
-    "ch_tra": "zh-Hant",
-    "ja": "ja",
-    "ko": "ko",
-    "nl": "nl",
-    "pl": "pl",
-    "cs": "cs",
-    "hu": "hu",
-    "ro": "ro",
-    "sv": "sv",
-    "da": "da",
-    "no": "no",
-    "fi": "fi",
-    "tr": "tr",
-    "uk": "uk",
-    "el": "el",
-    "he": "he",
-    "ar": "ar"
+LATIN_LANGUAGES = {
+    "en", "de", "es", "fr", "it", "pt",
+    "nl", "pl", "cs", "hu", "ro",
+    "sv", "da", "no", "fi", "tr"
+}
+
+
+SEPARATE_LANGUAGES = {
+    "ru", "uk", "ch_sim", "ch_tra",
+    "ja", "ko", "el", "he", "ar"
 }
 
 
@@ -172,10 +156,11 @@ KEYCODES = {
 }
 
 
+readers = []
 loaded_ocr_languages = []
 settings_mtime = None
-ocr_running = False
-ocr_settings_lock = threading.Lock()
+
+readers_lock = threading.Lock()
 
 hotkey_mtime = None
 hotkey_string = "cmd+shift+a"
@@ -185,6 +170,7 @@ hotkey_parts = {
 }
 
 hotkey_active = False
+ocr_running = False
 
 
 def load_settings_data():
@@ -244,12 +230,11 @@ def load_ocr_languages():
         ):
             continue
 
-        language = language.strip()
-
         if language not in ALL_LANGUAGE_CODES:
 
             print(
-                f"Неизвестный OCR язык пропущен: {language}"
+                f"Неизвестный OCR язык пропущен: "
+                f"{language}"
             )
 
             continue
@@ -262,55 +247,124 @@ def load_ocr_languages():
     return result[:3] or ["en"]
 
 
-def get_ocr_correction_enabled():
-    data = load_settings_data()
+def create_readers(
+    languages
+):
+    import easyocr
 
-    value = data.get(
-        "ocr_correction",
-        True
-    )
+    new_readers = []
 
-    if isinstance(
-        value,
-        bool
-    ):
-        return value
+    latin_languages = [
+        language
+        for language in languages
+        if language in LATIN_LANGUAGES
+    ]
 
-    return str(
-        value
-    ).strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on"
-    }
+    if latin_languages:
 
+        try:
+            print(
+                f"Загрузка OCR модели: "
+                f"{latin_languages}"
+            )
 
-def get_vision_languages(languages):
-    result = []
+            new_readers.append(
+                easyocr.Reader(
+                    latin_languages,
+                    quantize=False,
+                    gpu=False
+                )
+            )
+
+        except Exception as e:
+
+            print(
+                f"Не удалось загрузить совместную "
+                f"Latin-модель "
+                f"{latin_languages}: {e}"
+            )
+
+            for language in latin_languages:
+
+                try:
+                    print(
+                        f"Загрузка OCR модели отдельно: "
+                        f"{language}"
+                    )
+
+                    new_readers.append(
+                        easyocr.Reader(
+                            [language],
+                            quantize=False,
+                            gpu=False
+                        )
+                    )
+
+                except Exception as e:
+
+                    print(
+                        f"Не удалось загрузить "
+                        f"{language}: {e}"
+                    )
 
     for language in languages:
 
-        vision_code = VISION_LANGUAGE_CODES.get(
-            language
-        )
+        if language not in SEPARATE_LANGUAGES:
+            continue
 
-        if (
-            vision_code
-            and vision_code not in result
-        ):
-            result.append(
-                vision_code
+        try:
+            print(
+                f"Загрузка OCR модели: "
+                f"{language}"
             )
 
-    return result or ["en"]
+            new_readers.append(
+                easyocr.Reader(
+                    [language],
+                    quantize=False,
+                    gpu=False
+                )
+            )
+
+        except Exception as e:
+
+            print(
+                f"Не удалось загрузить "
+                f"{language}: {e}"
+            )
+
+    if not new_readers:
+
+        print(
+            "Не удалось загрузить выбранные модели. "
+            "Используется English."
+        )
+
+        try:
+            new_readers.append(
+                easyocr.Reader(
+                    ["en"],
+                    quantize=False,
+                    gpu=False
+                )
+            )
+
+        except Exception as e:
+
+            print(
+                f"Критическая ошибка загрузки "
+                f"EasyOCR: {e}"
+            )
+
+    return new_readers
 
 
-def refresh_ocr_if_needed():
+def refresh_readers_if_needed():
+    global readers
     global loaded_ocr_languages
     global settings_mtime
 
-    with ocr_settings_lock:
+    with readers_lock:
 
         try:
             current_mtime = os.path.getmtime(
@@ -325,6 +379,7 @@ def refresh_ocr_if_needed():
         if (
             languages == loaded_ocr_languages
             and current_mtime == settings_mtime
+            and readers
         ):
             return
 
@@ -332,44 +387,58 @@ def refresh_ocr_if_needed():
 
             print(
                 f"\nOCR языки изменились: "
-                f"{loaded_ocr_languages} → {languages}"
+                f"{loaded_ocr_languages} → "
+                f"{languages}"
             )
+
+        print(
+            "EasyOCR ещё не загружен. "
+            "Начинается загрузка моделей..."
+        )
+
+        start_time = time.perf_counter()
+
+        readers = create_readers(
+            languages
+        )
 
         loaded_ocr_languages = languages
         settings_mtime = current_mtime
 
-        vision_languages = get_vision_languages(
-            languages
+        elapsed = (
+            time.perf_counter()
+            - start_time
         )
 
         print(
-            f"Vision OCR языки активны: "
-            f"{vision_languages}"
+            f"OCR языки активны: "
+            f"{loaded_ocr_languages}"
         )
 
         print(
-            "Apple Vision не требует отдельной загрузки "
-            "OCR-моделей."
+            f"EasyOCR загружен за "
+            f"{elapsed:.2f} сек."
         )
 
 
 def preload_ocr():
-    time.sleep(1)
+    time.sleep(3)
 
     if ocr_running:
         return
 
     try:
         print(
-            "Подготовка Apple Vision OCR..."
+            "Отложенная загрузка EasyOCR..."
         )
 
-        refresh_ocr_if_needed()
+        refresh_readers_if_needed()
 
     except Exception as e:
 
         print(
-            f"Ошибка подготовки Vision OCR: {e}"
+            f"Ошибка фоновой загрузки EasyOCR: "
+            f"{e}"
         )
 
 
@@ -422,11 +491,13 @@ def parse_hotkey(
             "alt",
             "shift"
         }:
+
             mods.add(
                 part
             )
 
         else:
+
             key = part
 
     return {
@@ -467,7 +538,8 @@ def refresh_hotkey_if_needed():
     hotkey_mtime = current_mtime
 
     print(
-        f"Горячая клавиша активна: {hotkey_string}"
+        f"Горячая клавиша активна: "
+        f"{hotkey_string}"
     )
 
 
@@ -516,7 +588,8 @@ def open_permission_settings():
     except Exception as e:
 
         print(
-            f"Не удалось открыть настройки разрешений: {e}"
+            f"Не удалось открыть настройки "
+            f"разрешений: {e}"
         )
 
 
@@ -527,7 +600,10 @@ def request_permissions():
     accessibility_ok = True
     input_monitoring_ok = True
 
-    if AXIsProcessTrustedWithOptions is not None:
+    if (
+        AXIsProcessTrustedWithOptions
+        is not None
+    ):
 
         try:
 
@@ -540,7 +616,8 @@ def request_permissions():
         except Exception as e:
 
             print(
-                f"Ошибка проверки Accessibility: {e}"
+                f"Ошибка проверки Accessibility: "
+                f"{e}"
             )
 
     if hasattr(
@@ -557,7 +634,8 @@ def request_permissions():
         except Exception as e:
 
             print(
-                f"Ошибка проверки Input Monitoring: {e}"
+                f"Ошибка проверки Input Monitoring: "
+                f"{e}"
             )
 
     if (
@@ -579,7 +657,8 @@ def request_permissions():
         except Exception as e:
 
             print(
-                f"Ошибка запроса Input Monitoring: {e}"
+                f"Ошибка запроса Input Monitoring: "
+                f"{e}"
             )
 
     if (
@@ -594,7 +673,8 @@ def request_permissions():
         return True
 
     print(
-        "Требуются разрешения macOS для глобального хоткея."
+        "Требуются разрешения macOS "
+        "для глобального хоткея."
     )
 
     open_permission_settings()
@@ -611,6 +691,7 @@ def run_ocr():
     ocr_running = True
 
     try:
+
         process_ocr()
 
     except Exception as e:
@@ -620,6 +701,7 @@ def run_ocr():
         )
 
     finally:
+
         ocr_running = False
 
 
@@ -710,7 +792,8 @@ def start_hotkey_listener():
     if Quartz is None:
 
         print(
-            "Quartz недоступен. Глобальный хоткей не запущен."
+            "Quartz недоступен. "
+            "Глобальный хоткей не запущен."
         )
 
         return
@@ -727,7 +810,10 @@ def start_hotkey_listener():
 
             accessibility_ok = True
 
-            if AXIsProcessTrustedWithOptions is not None:
+            if (
+                AXIsProcessTrustedWithOptions
+                is not None
+            ):
 
                 accessibility_ok = bool(
                     AXIsProcessTrustedWithOptions(
@@ -778,7 +864,9 @@ def start_hotkey_listener():
         )
 
         print(
-            "Проверь Accessibility и Input Monitoring."
+            "Проверь Accessibility и "
+            "Input Monitoring для процесса, "
+            "который запускает ocr.py."
         )
 
         open_permission_settings()
@@ -820,205 +908,157 @@ def normalize_text(
     ).lower().strip()
 
 
-def load_image(
-    path
-):
-    if (
-        Vision is None
-        or Foundation is None
-        or Quartz is None
-    ):
-        raise RuntimeError(
-            "Apple Vision недоступен. "
-            "Установи pyobjc-framework-Vision."
-        )
-
-    url = Foundation.NSURL.fileURLWithPath_(
-        os.path.abspath(path)
-    )
-
-    source = Quartz.CGImageSourceCreateWithURL(
-        url,
-        None
-    )
-
-    if source is None:
-        raise RuntimeError(
-            f"Vision: не удалось открыть изображение: {path}"
-        )
-
-    image = Quartz.CGImageSourceCreateImageAtIndex(
-        source,
-        0,
-        None
-    )
-
-    if image is None:
-        raise RuntimeError(
-            f"Vision: не удалось декодировать изображение: {path}"
-        )
-
-    return image
-
-
-def run_vision_ocr(
-    path,
-    detail=False
-):
-    refresh_ocr_if_needed()
-
-    languages = get_vision_languages(
-        loaded_ocr_languages
-    )
-
-    use_language_correction = (
-        get_ocr_correction_enabled()
-    )
-
-    image = load_image(
-        path
-    )
-
-    request = Vision.VNRecognizeTextRequest.alloc().init()
-
-    request.setRecognitionLevel_(
-        Vision.VNRequestTextRecognitionLevelAccurate
-    )
-
-    request.setRecognitionLanguages_(
-        languages
-    )
-
-    request.setUsesLanguageCorrection_(
-        use_language_correction
-    )
-
-    handler = (
-        Vision.VNImageRequestHandler
-        .alloc()
-        .initWithCGImage_options_(
-            image,
-            {}
-        )
-    )
-
-    _, error = handler.performRequests_error_(
-        [request],
-        None
-    )
-
-    if error is not None:
-        raise RuntimeError(
-            f"Vision OCR failed: {error}"
-        )
-
-    observations = request.results() or []
-
-    image_width = Quartz.CGImageGetWidth(
-        image
-    )
-
-    image_height = Quartz.CGImageGetHeight(
-        image
-    )
-
-    output = []
-
-    for observation in observations:
-
-        candidates = (
-            observation.topCandidates_(1)
-        )
-
-        if not candidates:
-            continue
-
-        candidate = candidates[0]
-
-        text = str(
-            candidate.string()
-        ).strip()
-
-        if not text:
-            continue
-
-        try:
-            confidence = float(
-                candidate.confidence()
-            )
-
-        except Exception:
-            confidence = 0.0
-
-        if not detail:
-
-            output.append(
-                text
-            )
-
-            continue
-
-        bbox = observation.boundingBox()
-
-        x1 = (
-            bbox.origin.x
-            * image_width
-        )
-
-        y1 = (
-            1.0
-            - bbox.origin.y
-            - bbox.size.height
-        ) * image_height
-
-        x2 = (
-            bbox.origin.x
-            + bbox.size.width
-        ) * image_width
-
-        y2 = (
-            1.0
-            - bbox.origin.y
-        ) * image_height
-
-        output.append({
-            "text": text,
-            "confidence": confidence,
-            "x1": x1,
-            "y1": y1,
-            "x2": x2,
-            "y2": y2,
-            "cx": (x1 + x2) / 2,
-            "cy": (y1 + y2) / 2,
-            "width": x2 - x1,
-            "height": y2 - y1
-        })
-
-    return output
-
-
 def get_ocr_text(
     path
 ):
-    results = run_vision_ocr(
-        path,
-        detail=False
-    )
+    if not os.path.exists(path):
+        return ""
+
+    combined = []
+
+    for reader in readers:
+
+        try:
+
+            results = reader.readtext(
+                path,
+                detail=0
+            )
+
+        except Exception as e:
+
+            print(
+                f"OCR error: {e}"
+            )
+
+            continue
+
+        for line in results:
+
+            cleaned = line.strip()
+
+            if not cleaned:
+                continue
+
+            norm = normalize_text(
+                cleaned
+            )
+
+            if not norm:
+                continue
+
+            duplicate = False
+
+            for i, existing in enumerate(
+                combined
+            ):
+
+                existing_norm = normalize_text(
+                    existing
+                )
+
+                if (
+                    norm in existing_norm
+                    or existing_norm in norm
+                ):
+
+                    duplicate = True
+
+                    if (
+                        len(cleaned)
+                        > len(existing)
+                    ):
+
+                        combined[i] = cleaned
+
+                    break
+
+            if not duplicate:
+                combined.append(
+                    cleaned
+                )
 
     return " ".join(
-        result.strip()
-        for result in results
-        if str(result).strip()
+        combined
     )
 
 
 def get_ocr_boxes(
     path
 ):
-    return run_vision_ocr(
-        path,
-        detail=True
-    )
+    if not os.path.exists(path):
+        return []
+
+    all_results = []
+
+    for reader in readers:
+
+        try:
+
+            results = reader.readtext(
+                path,
+                detail=1
+            )
+
+        except Exception as e:
+
+            print(
+                f"OCR error: {e}"
+            )
+
+            continue
+
+        for result in results:
+
+            if len(result) != 3:
+                continue
+
+            box, text, confidence = result
+
+            text = text.strip()
+
+            if not text:
+                continue
+
+            try:
+
+                confidence = float(
+                    confidence
+                )
+
+            except Exception:
+
+                confidence = 0.0
+
+            xs = [
+                point[0]
+                for point in box
+            ]
+
+            ys = [
+                point[1]
+                for point in box
+            ]
+
+            x1 = min(xs)
+            x2 = max(xs)
+            y1 = min(ys)
+            y2 = max(ys)
+
+            all_results.append({
+                "text": text,
+                "confidence": confidence,
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2,
+                "cx": (x1 + x2) / 2,
+                "cy": (y1 + y2) / 2,
+                "width": x2 - x1,
+                "height": y2 - y1
+            })
+
+    return all_results
 
 
 def deduplicate_boxes(
@@ -1301,7 +1341,8 @@ def create_context_image(
     except Exception as e:
 
         print(
-            f"Ошибка создания контекста: {e}"
+            f"Ошибка создания контекста: "
+            f"{e}"
         )
 
         return False
@@ -1501,7 +1542,8 @@ def create_center_card_screenshot(
     except Exception as e:
 
         print(
-            f"Ошибка создания скрина карточки: {e}"
+            f"Ошибка создания скрина карточки: "
+            f"{e}"
         )
 
         return False
@@ -1594,7 +1636,8 @@ def process_ocr():
         return
 
     print(
-        f"Время выбора: {selection_time:.2f} сек."
+        f"Время выбора: "
+        f"{selection_time:.2f} сек."
     )
 
     screen_start = time.perf_counter()
@@ -1602,13 +1645,15 @@ def process_ocr():
     if not capture_full_screen():
 
         print(
-            "ПРЕДЛОЖЕНИЕ: не удалось получить screenshot экрана\n"
+            "ПРЕДЛОЖЕНИЕ: не удалось "
+            "получить screenshot экрана\n"
         )
 
         return
 
     print(
-        f"Полный экран: {time.perf_counter() - screen_start:.2f} сек."
+        f"Полный экран: "
+        f"{time.perf_counter() - screen_start:.2f} сек."
     )
 
     if create_center_card_screenshot(
@@ -1617,13 +1662,15 @@ def process_ocr():
     ):
 
         print(
-            f"СКРИН КАРТОЧКИ: {card_screenshot_path}"
+            f"СКРИН КАРТОЧКИ: "
+            f"{card_screenshot_path}"
         )
 
     else:
 
         print(
-            "СКРИН КАРТОЧКИ: не удалось создать"
+            "СКРИН КАРТОЧКИ: "
+            "не удалось создать"
         )
 
     match_start = time.perf_counter()
@@ -1634,13 +1681,16 @@ def process_ocr():
     )
 
     print(
-        f"Поиск слова на экране: {time.perf_counter() - match_start:.2f} сек."
+        f"Поиск слова на экране: "
+        f"{time.perf_counter() - match_start:.2f} сек."
     )
 
     if rect is None:
 
         print(
-            "ПРЕДЛОЖЕНИЕ: не удалось определить положение слова на экране\n"
+            "ПРЕДЛОЖЕНИЕ: не удалось "
+            "определить положение слова "
+            "на экране\n"
         )
 
         return
@@ -1662,33 +1712,37 @@ def process_ocr():
     )
 
     print(
-        f"Создание контекста: {time.perf_counter() - context_start:.2f} сек."
+        f"Создание контекста: "
+        f"{time.perf_counter() - context_start:.2f} сек."
     )
 
     if not local_rect:
 
         print(
-            "ПРЕДЛОЖЕНИЕ: не удалось создать область контекста\n"
+            "ПРЕДЛОЖЕНИЕ: не удалось "
+            "создать область контекста\n"
         )
 
         return
 
-    refresh_ocr_if_needed()
-
     ocr_start = time.perf_counter()
+
+    refresh_readers_if_needed()
 
     word_text = get_ocr_text(
         shot1_path
     )
 
     print(
-        f"Vision OCR слова: {time.perf_counter() - ocr_start:.2f} сек."
+        f"OCR слова: "
+        f"{time.perf_counter() - ocr_start:.2f} сек."
     )
 
     if not word_text:
 
         print(
-            "\nНе удалось распознать выделенное слово.\n"
+            "\nНе удалось распознать "
+            "выделенное слово.\n"
         )
 
         return
@@ -1705,7 +1759,8 @@ def process_ocr():
     )
 
     print(
-        f"Vision OCR контекста: {time.perf_counter() - context_ocr_start:.2f} сек."
+        f"OCR контекста: "
+        f"{time.perf_counter() - context_ocr_start:.2f} сек."
     )
 
     if not context_text:
@@ -1717,13 +1772,15 @@ def process_ocr():
         )
 
         print(
-            f"Vision OCR fallback: {time.perf_counter() - context_fallback_start:.2f} сек."
+            f"OCR fallback: "
+            f"{time.perf_counter() - context_fallback_start:.2f} сек."
         )
 
     if context_text:
 
         print(
-            f"ПРЕДЛОЖЕНИЕ: {context_text}\n"
+            f"ПРЕДЛОЖЕНИЕ: "
+            f"{context_text}\n"
         )
 
         card_start = time.perf_counter()
@@ -1735,7 +1792,8 @@ def process_ocr():
         )
 
         print(
-            f"Создание карточки: {time.perf_counter() - card_start:.2f} сек."
+            f"Создание карточки: "
+            f"{time.perf_counter() - card_start:.2f} сек."
         )
 
         if not success:
@@ -1766,31 +1824,18 @@ def process_ocr():
                 pass
 
     print(
-        f"Общее время обработки: {time.perf_counter() - start_time:.2f} сек."
+        f"Общее время обработки: "
+        f"{time.perf_counter() - start_time:.2f} сек."
     )
 
 
 refresh_hotkey_if_needed()
 
-if Vision is None:
-
-    print(
-        "КРИТИЧЕСКАЯ ОШИБКА: Apple Vision недоступен."
-    )
-
-    print(
-        "Установи pyobjc-framework-Vision."
-    )
-
-else:
-
-    print(
-        "Apple Vision OCR активен."
-    )
-
 print(
     f"\nSnap запущен. "
-    f"Выделите слово и нажмите {hotkey_string}."
+    f"EasyOCR будет загружен в фоне. "
+    f"Выделите слово и нажмите "
+    f"{hotkey_string}."
 )
 
 start_ocr_preloader()
