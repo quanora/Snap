@@ -48,6 +48,7 @@ REQUIREMENTS = """webui2==2.5.8
 easyocr
 pynput
 openai
+pyobjc-framework-Vision
 """
 
 

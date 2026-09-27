@@ -1,0 +1,9 @@
+{
+  "name": "Snap",
+  "package": "snap_addon",
+  "ankiweb_id": "",
+  "author": "Quanora",
+  "version": "0.1.0",
+  "homepage": "",
+  "conflicts": []
+}
