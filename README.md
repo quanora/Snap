@@ -12,9 +12,5 @@ Screen → Word Selection → OCR → Context Extraction → LLM → Card Genera
 https://github.com/user-attachments/assets/66e97406-e0f7-4398-a40a-6c5de6095eee
 
 
-
 # Where are the settings?
 Tools → Snap
-
-# Credits
-- [EasyOCR](https://github.com/JaidedAI/EasyOCR) – OCR engine
