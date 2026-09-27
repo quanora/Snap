@@ -121,6 +121,9 @@ function renderAddedCustomField(
 
             name.contentEditable = "false";
 
+            name.onkeydown = null;
+            name.onblur = null;
+
             webui.customFieldChanged(
                 field.id,
                 value
@@ -182,3 +185,51 @@ function renderCustomFields(fields) {
         );
     });
 }
+
+
+function setupNoteTypeInput() {
+    const input = document.getElementById(
+        "noteType"
+    );
+
+    if (!input) {
+        console.log(
+            "ERROR: noteType input not found"
+        );
+        return;
+    }
+
+    if (input.dataset.snapBound === "true") {
+        return;
+    }
+
+    input.dataset.snapBound = "true";
+
+    input.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                input.blur();
+            }
+        }
+    );
+
+    input.addEventListener(
+        "blur",
+        () => {
+            const value = input.value.trim();
+
+            if (!value) {
+                return;
+            }
+
+            webui.noteTypeChanged(
+                value
+            );
+        }
+    );
+}
+
+
+setupNoteTypeInput();

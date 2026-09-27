@@ -1232,7 +1232,6 @@ def create_context_image(
         return False
 
     try:
-
         image = Image.open(
             screen_path
         )
@@ -1256,7 +1255,8 @@ def create_context_image(
         )
 
         padding_x = 2400
-        padding_y = 180
+        padding_top = 260
+        padding_bottom = 320
 
         left = max(
             0,
@@ -1265,7 +1265,7 @@ def create_context_image(
 
         top = max(
             0,
-            y - padding_y
+            y - padding_top
         )
 
         right = min(
@@ -1275,7 +1275,7 @@ def create_context_image(
 
         bottom = min(
             screen_h,
-            y + h + padding_y
+            y + h + padding_bottom
         )
 
         cropped = image.crop(
@@ -1456,54 +1456,83 @@ def create_center_card_screenshot(
         return False
 
     try:
-
         image = Image.open(
             screen_path
         )
 
         screen_w, screen_h = image.size
 
-        capture_w = min(
-            2000,
-            screen_w
+        capture_w = int(
+            screen_w * 0.70
         )
 
-        capture_h = min(
-            1200,
-            screen_h
+        capture_h = int(
+            screen_h * 0.65
+        )
+
+        vertical_shift = int(
+            screen_h * 0.10
         )
 
         left = (
-            screen_w
-            - capture_w
+            screen_w - capture_w
         ) // 2
 
         top = (
-            screen_h
-            - capture_h
-        ) // 2
+            screen_h - capture_h
+        ) // 2 - vertical_shift
+
+        top = max(
+            0,
+            top
+        )
+
+        right = min(
+            screen_w,
+            left + capture_w
+        )
+
+        bottom = min(
+            screen_h,
+            top + capture_h
+        )
 
         cropped = image.crop(
             (
                 left,
                 top,
-                left + capture_w,
-                top + capture_h
+                right,
+                bottom
             )
         )
+
+        if os.path.exists(
+            output_path
+        ):
+            try:
+                os.remove(
+                    output_path
+                )
+            except OSError:
+                pass
 
         cropped.save(
             output_path
         )
 
+        print(
+            f"Card screenshot: "
+            f"x={left}, y={top}, "
+            f"w={right - left}, "
+            f"h={bottom - top}"
+        )
+
         return True
 
     except Exception as e:
-
         print(
             f"Ошибка создания скрина карточки: {e}"
         )
-
         return False
 
 
