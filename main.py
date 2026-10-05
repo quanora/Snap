@@ -109,6 +109,9 @@ default_settings = {
         },
         "Picture": {
             "name": "Picture"
+        },
+        "Audio": {
+            "name": "Audio"
         }
     },
 

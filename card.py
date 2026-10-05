@@ -21,7 +21,6 @@ SETTINGS_PATH = os.path.join(
     "settings.json"
 )
 
-SUCCESS_SOUND = "/System/Library/Sounds/Funk.aiff"
 ERROR_SOUND = "/System/Library/Sounds/Sosumi.aiff"
 AFPLAY = "/usr/bin/afplay"
 
@@ -31,12 +30,19 @@ ALLOWED_TAGS = {
     "verb",
     "adjective",
     "adverb",
-    "conjunction",
-    "preposition",
     "pronoun",
     "determiner",
+    "preposition",
+    "conjunction",
     "interjection",
+    "auxiliary",
+    "modal",
+    "particle",
+    "numeral",
+    "proper_noun",
     "phrase",
+    "idiom",
+    "abbreviation",
     "symbol",
     "math"
 }
@@ -72,16 +78,23 @@ noun
 verb
 adjective
 adverb
-conjunction
-preposition
 pronoun
 determiner
+preposition
+conjunction
 interjection
+auxiliary
+modal
+particle
+numeral
+proper_noun
 phrase
+idiom
+abbreviation
 symbol
 math
 
-Use phrase for normal multi-word lexical expressions, including phrasal verbs. Use the grammatical role in context for single words.
+Use phrase for normal multi-word lexical expressions, including phrasal verbs. Use idiom only when its meaning is not directly predictable from the individual words.
 
 CUSTOM FIELDS:
 Fill every configured custom field exactly once.
@@ -109,17 +122,9 @@ Return only the structured JSON object.
 """.strip()
 
 
-def play_sound(
-    success
-):
-    sound_path = (
-        SUCCESS_SOUND
-        if success
-        else ERROR_SOUND
-    )
-
+def play_error_sound():
     if not os.path.exists(
-        sound_path
+        ERROR_SOUND
     ):
         return
 
@@ -127,7 +132,7 @@ def play_sound(
         subprocess.Popen(
             [
                 AFPLAY,
-                sound_path
+                ERROR_SOUND
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
@@ -173,10 +178,30 @@ def load_settings():
     return settings
 
 
-def call_anki(
-    action,
-    params=None
-):
+def load_job_settings(payload):
+    snapshot = payload.get(
+        "settings_snapshot"
+    )
+
+    if isinstance(
+        snapshot,
+        dict
+    ):
+        print(
+            "Card: using settings snapshot from queue"
+        )
+
+        return snapshot
+
+    print(
+        "Card: no settings snapshot in job, "
+        "using current settings.json"
+    )
+
+    return load_settings()
+
+
+def call_anki(action, params=None):
     payload = {
         "action": action,
         "version": 6,
@@ -200,7 +225,6 @@ def call_anki(
             request,
             timeout=15
         ) as response:
-
             data = json.loads(
                 response.read().decode(
                     "utf-8"
@@ -208,13 +232,11 @@ def call_anki(
             )
 
     except urllib.error.HTTPError as e:
-
         try:
             body = e.read().decode(
                 "utf-8",
                 errors="replace"
             )
-
         except Exception:
             body = str(e)
 
@@ -224,14 +246,12 @@ def call_anki(
         )
 
     except urllib.error.URLError as e:
-
         raise RuntimeError(
             f"AnkiConnect connection error: "
             f"{e.reason}"
         )
 
     except Exception as e:
-
         raise RuntimeError(
             f"AnkiConnect error: {e}"
         )
@@ -258,9 +278,7 @@ def call_anki(
     )
 
 
-def get_llm_base_url(
-    settings
-):
+def get_llm_base_url(settings):
     url = str(
         settings.get(
             "llm_url",
@@ -281,9 +299,7 @@ def get_llm_base_url(
     return url
 
 
-def get_llm_client(
-    settings
-):
+def get_llm_client(settings):
     return OpenAI(
         base_url=(
             get_llm_base_url(
@@ -296,9 +312,7 @@ def get_llm_client(
     )
 
 
-def get_model(
-    settings
-):
+def get_model(settings):
     configured_model = str(
         settings.get(
             "llm_model",
@@ -307,7 +321,6 @@ def get_model(
     ).strip()
 
     if configured_model:
-
         print(
             f"Card: configured model = "
             f"{configured_model}"
@@ -331,7 +344,6 @@ def get_model(
             request,
             timeout=5
         ) as response:
-
             data = json.loads(
                 response.read().decode(
                     "utf-8"
@@ -339,7 +351,6 @@ def get_model(
             )
 
     except Exception as e:
-
         raise RuntimeError(
             f"Could not read LM Studio models: {e}"
         )
@@ -350,7 +361,6 @@ def get_model(
     )
 
     for model in models:
-
         if model.get(
             "type"
         ) != "llm":
@@ -359,13 +369,11 @@ def get_model(
         if model.get(
             "loaded_instances"
         ):
-
             model_key = model.get(
                 "key"
             )
 
             if not model_key:
-
                 raise RuntimeError(
                     "Loaded LM Studio model has no key"
                 )
@@ -382,9 +390,7 @@ def get_model(
     )
 
 
-def get_language_profiles(
-    settings
-):
+def get_language_profiles(settings):
     raw_profiles = settings.get(
         "language_profiles"
     )
@@ -395,9 +401,7 @@ def get_language_profiles(
         raw_profiles,
         dict
     ):
-
         for language, profile in raw_profiles.items():
-
             language = str(
                 language
             ).strip()
@@ -478,30 +482,22 @@ def get_language_profiles(
     return profiles
 
 
-def find_profile(
-    profiles,
-    language
-):
+def find_profile(profiles, language):
     language = str(
         language or ""
     ).strip()
 
     for profile_language in profiles:
-
         if (
             profile_language.casefold()
-            ==
-            language.casefold()
+            == language.casefold()
         ):
             return profile_language
 
     return None
 
 
-def get_profile_translation(
-    profiles,
-    language
-):
+def get_profile_translation(profiles, language):
     profile_language = find_profile(
         profiles,
         language
@@ -531,42 +527,7 @@ def get_profile_translation(
     return translation_language
 
 
-def get_profile_deck(
-    profiles,
-    language
-):
-    profile_language = find_profile(
-        profiles,
-        language
-    )
-
-    if not profile_language:
-        raise RuntimeError(
-            f"Language profile not found: "
-            f"{language}"
-        )
-
-    deck = str(
-        profiles[
-            profile_language
-        ].get(
-            "deck",
-            ""
-        )
-    ).strip()
-
-    if not deck:
-        raise RuntimeError(
-            f"Deck is empty for profile "
-            f"'{profile_language}'"
-        )
-
-    return deck
-
-
-def extract_json(
-    text
-):
+def extract_json(text):
     if not text:
         return None
 
@@ -576,28 +537,23 @@ def extract_json(
         return json.loads(
             text
         )
-
     except json.JSONDecodeError:
         pass
 
     if text.startswith(
         "```"
     ):
-
         lines = text.splitlines()
 
         if (
             lines
-            and lines[0].startswith(
-                "```"
-            )
+            and lines[0].startswith("```")
         ):
             lines = lines[1:]
 
         if (
             lines
-            and lines[-1].strip()
-            == "```"
+            and lines[-1].strip() == "```"
         ):
             lines = lines[:-1]
 
@@ -609,7 +565,6 @@ def extract_json(
             return json.loads(
                 text
             )
-
         except json.JSONDecodeError:
             pass
 
@@ -635,7 +590,6 @@ def extract_json(
                 end + 1
             ]
         )
-
     except json.JSONDecodeError:
         return None
 
@@ -650,7 +604,6 @@ def llm_chat(
     schema_name
 ):
     try:
-
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -691,7 +644,6 @@ def llm_chat(
         )
 
     except Exception as structured_error:
-
         print(
             "Card: structured output failed = "
             f"{structured_error}"
@@ -742,10 +694,7 @@ def llm_chat(
     return content
 
 
-def detect_by_unicode(
-    text,
-    profiles
-):
+def detect_by_unicode(text, profiles):
     if not text:
         return None
 
@@ -760,10 +709,7 @@ def detect_by_unicode(
         for char in text
     )
 
-    if any(
-        japanese
-    ):
-
+    if any(japanese):
         if "japanese" in available:
             return available["japanese"]
 
@@ -773,10 +719,7 @@ def detect_by_unicode(
         for char in text
     )
 
-    if any(
-        korean
-    ):
-
+    if any(korean):
         if "korean" in available:
             return available["korean"]
 
@@ -787,7 +730,6 @@ def detect_by_unicode(
     )
 
     if cyrillic_count:
-
         has_ukrainian = any(
             char.lower() in {
                 "ї",
@@ -817,7 +759,6 @@ def detect_by_unicode(
     )
 
     if greek_count:
-
         if "greek" in available:
             return available["greek"]
 
@@ -828,7 +769,6 @@ def detect_by_unicode(
     )
 
     if hebrew_count:
-
         if "hebrew" in available:
             return available["hebrew"]
 
@@ -839,7 +779,6 @@ def detect_by_unicode(
     )
 
     if arabic_count:
-
         if "arabic" in available:
             return available["arabic"]
 
@@ -850,7 +789,6 @@ def detect_by_unicode(
     )
 
     if han_count:
-
         if "chinese (simplified)" in available:
             return available["chinese (simplified)"]
 
@@ -860,9 +798,7 @@ def detect_by_unicode(
     return None
 
 
-def build_detection_schema(
-    profiles
-):
+def build_detection_schema(profiles):
     languages = list(
         profiles.keys()
     )
@@ -892,7 +828,6 @@ def detect_source_language(
     if len(
         profiles
     ) == 1:
-
         language = next(
             iter(
                 profiles
@@ -918,7 +853,6 @@ def detect_source_language(
     )
 
     if unicode_language:
-
         print(
             f"Card: Unicode language detection = "
             f"{unicode_language}"
@@ -940,7 +874,7 @@ Do not use the user's language.
 Do not guess from translation preferences.
 
 The answer must describe the language of the vocabulary being learned.
-"""
+""".strip()
 
     user_content = (
         "CONFIGURED LANGUAGES:\n"
@@ -1006,9 +940,7 @@ The answer must describe the language of the vocabulary being learned.
     return profile_language
 
 
-def validate_custom_fields(
-    custom_fields
-):
+def validate_custom_fields(custom_fields):
     if not isinstance(
         custom_fields,
         list
@@ -1021,7 +953,6 @@ def validate_custom_fields(
     seen_names = set()
 
     for field in custom_fields:
-
         if not isinstance(
             field,
             dict
@@ -1049,14 +980,12 @@ def validate_custom_fields(
             continue
 
         if field_id in seen_ids:
-
             raise RuntimeError(
                 f"Duplicate custom field id: "
                 f"'{field_id}'"
             )
 
         if field_name in seen_names:
-
             raise RuntimeError(
                 f"Duplicate custom field name: "
                 f"'{field_name}'"
@@ -1091,7 +1020,6 @@ def get_custom_field_instruction(
     ).strip()
 
     if field_id == "custom_description":
-
         return (
             "Write a short dictionary-style definition "
             f"of FRONT entirely in SOURCE LANGUAGE: "
@@ -1102,7 +1030,6 @@ def get_custom_field_instruction(
         )
 
     if field_id == "custom_transcription":
-
         return (
             "Return ONLY the IPA pronunciation of FRONT "
             f"in SOURCE LANGUAGE: {source_language}. "
@@ -1133,7 +1060,6 @@ def build_custom_field_info(
     required = []
 
     for field in custom_fields:
-
         if not isinstance(
             field,
             dict
@@ -1186,9 +1112,7 @@ def build_custom_field_info(
     )
 
 
-def build_schema(
-    custom_fields
-):
+def build_schema(custom_fields):
     (
         _,
         custom_properties,
@@ -1359,9 +1283,7 @@ Return only the structured JSON object.
     )
 
 
-def clean_example(
-    example
-):
+def clean_example(example):
     example = str(
         example
     ).strip()
@@ -1377,9 +1299,7 @@ def clean_example(
     return example
 
 
-def has_cyrillic(
-    text
-):
+def has_cyrillic(text):
     return any(
         "\u0400" <= char <= "\u04ff"
         for char in str(
@@ -1388,9 +1308,7 @@ def has_cyrillic(
     )
 
 
-def has_latin(
-    text
-):
+def has_latin(text):
     return any(
         ("A" <= char <= "Z")
         or ("a" <= char <= "z")
@@ -1400,9 +1318,7 @@ def has_latin(
     )
 
 
-def has_japanese(
-    text
-):
+def has_japanese(text):
     return any(
         (
             "\u3040" <= char <= "\u30ff"
@@ -1427,22 +1343,12 @@ def validate_back_language(
 
     language = translation_language.casefold()
 
-    if language == "russian":
-        return has_cyrillic(
-            text
-        )
-
-    if language == "ukrainian":
-        return has_cyrillic(
-            text
-        )
-
-    if language == "bulgarian":
-        return has_cyrillic(
-            text
-        )
-
-    if language == "serbian":
+    if language in {
+        "russian",
+        "ukrainian",
+        "bulgarian",
+        "serbian"
+    }:
         return has_cyrillic(
             text
         )
@@ -1551,9 +1457,7 @@ def repair_back(
             front,
             back
         ),
-        (
-            "Repair the translation exactly as requested."
-        ),
+        "Repair the translation exactly as requested.",
         150,
         schema,
         "translation_repair"
@@ -1661,7 +1565,6 @@ Do not use Russian unless TRANSLATION LANGUAGE is Russian.
         )
 
     if ocr_correction:
-
         corrected_word = str(
             data.get(
                 "corrected_word",
@@ -1683,7 +1586,6 @@ Do not use Russian unless TRANSLATION LANGUAGE is Russian.
             corrected_context = context
 
     else:
-
         corrected_word = word
         corrected_context = context
 
@@ -1731,7 +1633,6 @@ Do not use Russian unless TRANSLATION LANGUAGE is Russian.
     }
 
     for field in custom_fields:
-
         if not isinstance(
             field,
             dict
@@ -1767,8 +1668,7 @@ Do not use Russian unless TRANSLATION LANGUAGE is Russian.
 
     if (
         result["front"].casefold()
-        ==
-        result["back"].casefold()
+        == result["back"].casefold()
     ):
         raise RuntimeError(
             "LLM returned FRONT as BACK"
@@ -1784,7 +1684,6 @@ Do not use Russian unless TRANSLATION LANGUAGE is Russian.
         result["back"],
         translation_language
     ):
-
         print(
             "Card: BACK language check failed"
         )
@@ -1856,7 +1755,6 @@ def get_configured_field_name(
         config,
         dict
     ):
-
         if required:
             raise RuntimeError(
                 f"Field setting '{field_id}' is missing"
@@ -1872,7 +1770,6 @@ def get_configured_field_name(
     ).strip()
 
     if not name:
-
         if required:
             raise RuntimeError(
                 f"Field '{field_id}' has no configured name"
@@ -1881,7 +1778,6 @@ def get_configured_field_name(
         return None
 
     if name not in model_fields:
-
         raise RuntimeError(
             f"Configured field '{name}' for "
             f"'{field_id}' was not found in Anki. "
@@ -1943,7 +1839,6 @@ def build_anki_fields(
     )
 
     for field in custom_fields:
-
         if not isinstance(
             field,
             dict
@@ -1971,14 +1866,12 @@ def build_anki_fields(
             continue
 
         if field_name in fields:
-
             raise RuntimeError(
                 f"Duplicate Anki field mapping: "
                 f"{field_name}"
             )
 
         if field_name not in model_fields:
-
             raise RuntimeError(
                 f"Custom Anki field '{field_name}' "
                 f"was not found. Available fields: "
@@ -1995,9 +1888,7 @@ def build_anki_fields(
     return fields
 
 
-def store_image(
-    image_path
-):
+def store_image(image_path):
     if (
         not image_path
         or not os.path.exists(
@@ -2038,10 +1929,13 @@ def attach_image(
     )
 
     if not picture_name:
+        print(
+            "Card: picture disabled or not configured"
+        )
+
         return
 
     if picture_name in fields:
-
         raise RuntimeError(
             f"Picture field '{picture_name}' "
             "conflicts with another field"
@@ -2052,21 +1946,92 @@ def attach_image(
     )
 
     if filename:
-
         fields[picture_name] = (
             f'<img src="{filename}">'
         )
 
 
-def parse_tags(
-    tag_text
+def attach_audio(
+    note,
+    fields,
+    settings,
+    model_fields,
+    audio_path
 ):
+    if not audio_path:
+        print(
+            "Card: no audio path provided"
+        )
+
+        return
+
+    audio_path = os.path.abspath(
+        os.path.expanduser(
+            audio_path
+        )
+    )
+
+    if not os.path.isfile(
+        audio_path
+    ):
+        raise RuntimeError(
+            f"Audio file not found: {audio_path}"
+        )
+
+    audio_name = get_configured_field_name(
+        settings,
+        "Audio",
+        model_fields,
+        required=True
+    )
+
+    if audio_name in fields:
+        raise RuntimeError(
+            f"Audio field '{audio_name}' "
+            "conflicts with another mapped field"
+        )
+
+    extension = os.path.splitext(
+        audio_path
+    )[1].lower()
+
+    if not extension:
+        extension = ".m4a"
+
+    filename = (
+        f"snap_{uuid.uuid4().hex}"
+        + extension
+    )
+
+    note["audio"] = [
+        {
+            "filename": filename,
+            "path": audio_path,
+            "fields": [
+                audio_name
+            ]
+        }
+    ]
+
+    print(
+        f"Card: audio field = {audio_name}"
+    )
+
+    print(
+        f"Card: audio file = {audio_path}"
+    )
+
+    print(
+        f"Card: audio filename = {filename}"
+    )
+
+
+def parse_tags(tag_text):
     tag = str(
         tag_text
     ).strip().lower()
 
     if tag and tag != "auto":
-
         return [
             "auto",
             tag
@@ -2081,7 +2046,8 @@ def add_card(
     card,
     settings,
     selected_profile,
-    image_path
+    image_path,
+    audio_path
 ):
     note_model = str(
         settings.get(
@@ -2091,7 +2057,6 @@ def add_card(
     ).strip()
 
     if not note_model:
-
         raise RuntimeError(
             "Setting 'note_model' is empty"
         )
@@ -2104,7 +2069,6 @@ def add_card(
     ).strip()
 
     if not deck_name:
-
         raise RuntimeError(
             "Selected language profile has no deck"
         )
@@ -2123,7 +2087,6 @@ def add_card(
         )
         or not model_fields
     ):
-
         raise RuntimeError(
             "Could not read Anki model fields"
         )
@@ -2169,6 +2132,14 @@ def add_card(
         "picture": []
     }
 
+    attach_audio(
+        note,
+        fields,
+        settings,
+        model_fields,
+        audio_path
+    )
+
     check = call_anki(
         "canAddNotesWithErrorDetail",
         {
@@ -2182,7 +2153,6 @@ def add_card(
         check,
         list
     ):
-
         check = (
             check[0]
             if check
@@ -2196,7 +2166,6 @@ def add_card(
         check,
         dict
     ):
-
         raise RuntimeError(
             f"Invalid Anki validation response: "
             f"{check}"
@@ -2217,7 +2186,6 @@ def add_card(
     if not check.get(
         "canAdd"
     ):
-
         print(
             "Card: not added = "
             + str(
@@ -2238,7 +2206,6 @@ def add_card(
     )
 
     if not note_id:
-
         raise RuntimeError(
             "Anki returned no note ID"
         )
@@ -2247,23 +2214,26 @@ def add_card(
         f"Card: added to Anki = {note_id}"
     )
 
+    if audio_path:
+        print(
+            "Card: audio attached successfully"
+        )
+
     return True
 
 
 def main():
     try:
-
         payload = json.load(
             sys.stdin
         )
 
     except Exception as e:
-
         print(
             f"Card: input JSON error = {e}"
         )
 
-        play_sound(False)
+        play_error_sound()
 
         return 1
 
@@ -2271,14 +2241,25 @@ def main():
         payload,
         dict
     ):
-
         print(
             "Card: invalid input JSON"
         )
 
-        play_sound(False)
+        play_error_sound()
 
         return 1
+
+    job_id = str(
+        payload.get(
+            "job_id",
+            ""
+        )
+    ).strip()
+
+    if job_id:
+        print(
+            f"Card: job id = {job_id}"
+        )
 
     word = str(
         payload.get(
@@ -2301,13 +2282,19 @@ def main():
         )
     ).strip()
 
-    if not word:
+    audio_path = str(
+        payload.get(
+            "audio",
+            ""
+        ).strip()
+    )
 
+    if not word:
         print(
             "Card: empty word"
         )
 
-        play_sound(False)
+        play_error_sound()
 
         return 1
 
@@ -2319,9 +2306,15 @@ def main():
         f"Card: input context = {context}"
     )
 
-    try:
+    print(
+        f"Card: audio input = "
+        f"{audio_path or 'none'}"
+    )
 
-        settings = load_settings()
+    try:
+        settings = load_job_settings(
+            payload
+        )
 
         profiles = get_language_profiles(
             settings
@@ -2368,6 +2361,12 @@ def main():
             profiles,
             source_language
         )
+
+        if not selected_profile_name:
+            raise RuntimeError(
+                f"Could not find selected profile: "
+                f"{source_language}"
+            )
 
         selected_profile = profiles[
             selected_profile_name
@@ -2418,12 +2417,12 @@ def main():
             card,
             settings,
             selected_profile,
-            image_path
+            image_path,
+            audio_path
         )
 
-        play_sound(
-            success
-        )
+        if not success:
+            play_error_sound()
 
         return (
             0
@@ -2432,12 +2431,11 @@ def main():
         )
 
     except Exception as e:
-
         print(
             f"Card: ERROR = {e}"
         )
 
-        play_sound(False)
+        play_error_sound()
 
         return 1
 

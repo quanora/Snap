@@ -11,6 +11,9 @@
         },
         "Picture": {
             "name": "Фотография"
+        },
+        "Audio": {
+            "name": "Аудио"
         }
     },
     "custom_fields": [
@@ -34,10 +37,6 @@
         "German": {
             "translation_language": "English",
             "deck": "All decks::Languages::German::Mining"
-        },
-        "Japanese": {
-            "translation_language": "English",
-            "deck": "Test"
         }
     },
     "hotkey": "cmd+shift+a",
