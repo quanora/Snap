@@ -1410,7 +1410,7 @@ def handle_audio_error(request_id, reason):
 
     if request_id == "system":
         if reason == "no_io_callbacks":
-            open_audio_permission_settings()
+            log("No IO callbacks: output device may be idle. Play audio and retry.", "AUDIO")
 
         elif reason == "zero_audio":
             log(
