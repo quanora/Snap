@@ -8,6 +8,7 @@ The example of a card. The quality mostly depends on what model and prompt you a
 
 
 # How does this work?
+Hotkey (Cmd+Shift+A) → Screen Capture (SCK) & screenshot → Word Selection (screencapture -i -s) → Apple Vision OCR → Context: subtitle from screen.swift (history/cache) or fallback to line OCR → Audio: audio.swift SELECT by timestamp → circular buffer clip → card_queue → LLM Processing & Card Generation (Lang detection → LLM formatting via LM Studio & JSON schema → Target language validation & retry) → AnkiConnect Export (attachments & addNote) → Anki.
 
 https://github.com/user-attachments/assets/b5fad899-94e0-4c48-848d-cff26ad6a35e
 
