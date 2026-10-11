@@ -15,6 +15,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 uv_dir = os.path.join(current_dir, ".snap")
 uv_path = os.path.join(uv_dir, "uv")
+uv_temp_path = os.path.join(uv_dir, "uv.new")
 
 venv_path = os.path.join(current_dir, ".venv")
 venv_python = os.path.join(venv_path, "bin", "python")
@@ -53,14 +54,19 @@ pyobjc-framework-Vision
 
 
 def log(message):
-    with open(
-        log_path,
-        "a",
-        encoding="utf-8"
-    ) as file:
-        file.write(message + "\n")
+    message = str(message)
 
-    print(message)
+    try:
+        with open(
+            log_path,
+            "a",
+            encoding="utf-8"
+        ) as file:
+            file.write(message + "\n")
+    except Exception as e:
+        print(f"Snap: could not write log: {e}")
+
+    print(message, flush=True)
 
 
 def reset_log():
@@ -100,10 +106,10 @@ def create_requirements():
 def get_uv_url():
     machine = platform.machine().lower()
 
-    if machine == "arm64":
+    if machine in {"arm64", "aarch64"}:
         filename = "uv-aarch64-apple-darwin.tar.gz"
 
-    elif machine == "x86_64":
+    elif machine in {"x86_64", "amd64"}:
         filename = "uv-x86_64-apple-darwin.tar.gz"
 
     else:
@@ -117,15 +123,68 @@ def get_uv_url():
     )
 
 
-def install_uv():
-    if os.path.exists(uv_path):
-        log(f"Snap: uv already exists: {uv_path}")
-        return
+def verify_uv_executable(path, label="uv"):
+    if not os.path.isfile(path):
+        log(f"Snap: {label} is missing or is not a regular file: {path}")
+        return False
 
+    try:
+        mode = os.stat(path).st_mode
+
+        # Restore execute permissions if they were lost when the addon
+        # archive was created or extracted.
+        if not (mode & stat.S_IXUSR):
+            os.chmod(
+                path,
+                mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
+            log(f"Snap: restored executable permissions for {label}")
+
+        result = subprocess.run(
+            [path, "--version"],
+            cwd=current_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=10
+        )
+
+        output = (result.stdout or "").strip()
+
+        if result.returncode == 0 and output:
+            log(f"Snap: {label} verified: {output.splitlines()[0]}")
+            return True
+
+        log(
+            f"Snap: {label} verification failed: "
+            f"exit={result.returncode}; output={output[:300]!r}"
+        )
+        return False
+
+    except subprocess.TimeoutExpired:
+        log(f"Snap: {label} verification timed out")
+        return False
+
+    except Exception as e:
+        log(f"Snap: {label} cannot be executed: {e}")
+        return False
+
+
+def install_uv():
     os.makedirs(
         uv_dir,
         exist_ok=True
     )
+
+    # Do not trust existence alone. The file may have lost its execute bit
+    # during packaging, or it may be truncated/corrupted.
+    if os.path.exists(uv_path):
+        log(f"Snap: checking existing uv: {uv_path}")
+
+        if verify_uv_executable(uv_path, "existing uv"):
+            return
+
+        log("Snap: existing uv is not usable; reinstalling it")
 
     url = get_uv_url()
 
@@ -134,62 +193,94 @@ def install_uv():
         "uv.tar.gz"
     )
 
-    log(
-        f"Snap: downloading uv: {url}"
-    )
-
-    urllib.request.urlretrieve(
-        url,
-        archive_path
-    )
-
-    log("Snap: uv downloaded")
-
-    with tarfile.open(
-        archive_path,
-        "r:gz"
-    ) as archive:
-
-        uv_member = None
-
-        for member in archive.getmembers():
-
-            if member.name.endswith("/uv"):
-                uv_member = member
-                break
-
-        if uv_member is None:
+    # Clean up incomplete artifacts from an earlier failed bootstrap.
+    for path in (archive_path, uv_temp_path):
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except OSError as e:
             raise RuntimeError(
-                "uv executable was not found in the archive"
+                f"Cannot remove stale bootstrap file {path}: {e}"
             )
 
-        extracted = archive.extractfile(
-            uv_member
+    log(f"Snap: downloading uv: {url}")
+
+    try:
+        with urllib.request.urlopen(url, timeout=60) as response:
+            with open(archive_path, "wb") as output:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    output.write(chunk)
+
+        if not os.path.isfile(archive_path) or os.path.getsize(archive_path) == 0:
+            raise RuntimeError("Downloaded uv archive is empty")
+
+        log("Snap: uv downloaded")
+
+        with tarfile.open(
+            archive_path,
+            "r:gz"
+        ) as archive:
+            uv_member = None
+
+            for member in archive.getmembers():
+                if member.isfile() and (
+                    member.name == "uv"
+                    or member.name.endswith("/uv")
+                ):
+                    uv_member = member
+                    break
+
+            if uv_member is None:
+                raise RuntimeError(
+                    "uv executable was not found in the archive"
+                )
+
+            extracted = archive.extractfile(uv_member)
+
+            if extracted is None:
+                raise RuntimeError("Failed to extract uv")
+
+            with extracted:
+                with open(uv_temp_path, "wb") as output:
+                    while True:
+                        chunk = extracted.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        output.write(chunk)
+
+        # Set the executable bit explicitly rather than relying on archive
+        # permission metadata to survive packaging and extraction.
+        os.chmod(uv_temp_path, 0o755)
+
+        if not verify_uv_executable(uv_temp_path, "downloaded uv"):
+            raise RuntimeError(
+                "Downloaded uv failed its execution check"
+            )
+
+        # Atomic replacement avoids leaving a half-written uv binary in place.
+        os.replace(
+            uv_temp_path,
+            uv_path
         )
+        os.chmod(uv_path, 0o755)
 
-        if extracted is None:
+        if not verify_uv_executable(uv_path, "installed uv"):
             raise RuntimeError(
-                "Failed to extract uv"
+                "Installed uv could not be executed after replacement"
             )
 
-        with open(
-            uv_path,
-            "wb"
-        ) as file:
-            file.write(
-                extracted.read()
-            )
+        log("Snap: uv installed and verified")
 
-    os.chmod(
-        uv_path,
-        os.stat(uv_path).st_mode | stat.S_IEXEC
-    )
-
-    os.remove(
-        archive_path
-    )
-
-    log("Snap: uv installed")
+    finally:
+        for path in (archive_path, uv_temp_path):
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except OSError as e:
+                log(f"Snap: cleanup warning for {path}: {e}")
 
 
 def install_dependencies():
@@ -213,10 +304,7 @@ def install_dependencies():
         install_uv()
 
         if not os.path.exists(venv_python):
-
-            log(
-                "Snap: creating Python 3.12 environment"
-            )
+            log("Snap: creating Python 3.12 environment")
 
             result = subprocess.run(
                 [
@@ -229,25 +317,23 @@ def install_dependencies():
                 cwd=current_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True
+                text=True,
+                timeout=300
             )
 
-            log(result.stdout)
+            if result.stdout:
+                log(result.stdout.rstrip())
 
             if result.returncode != 0:
                 raise RuntimeError(
-                    "Failed to create Python 3.12 environment"
+                    "Failed to create Python 3.12 environment "
+                    f"(exit code {result.returncode})"
                 )
 
         else:
+            log("Snap: Python environment already exists")
 
-            log(
-                "Snap: Python environment already exists"
-            )
-
-        log(
-            "Snap: installing dependencies"
-        )
+        log("Snap: installing dependencies")
 
         result = subprocess.run(
             [
@@ -262,29 +348,25 @@ def install_dependencies():
             cwd=current_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
+            timeout=1800
         )
 
-        log(result.stdout)
+        if result.stdout:
+            log(result.stdout.rstrip())
 
         if result.returncode != 0:
             raise RuntimeError(
-                "Failed to install dependencies"
+                "Failed to install dependencies "
+                f"(exit code {result.returncode})"
             )
 
-        log(
-            "Snap: dependencies are ready"
-        )
-
+        log("Snap: dependencies are ready")
         bootstrap_done = True
 
     except Exception as e:
-
         bootstrap_error = str(e)
-
-        log(
-            f"Snap: installation error: {e}"
-        )
+        log(f"Snap: installation error: {e}")
 
 
 def start_bootstrap():
@@ -308,36 +390,20 @@ def check_bootstrap():
     bootstrap_timer = None
 
     if bootstrap_error is not None:
-
         if settings_action is not None:
-
             settings_action.setText(
                 "Snap (Installation Error)"
             )
+            settings_action.setEnabled(False)
 
-            settings_action.setEnabled(
-                False
-            )
-
-        log(
-            "Snap: bootstrap failed"
-        )
-
+        log("Snap: bootstrap failed")
         return
 
-    log(
-        "Snap: bootstrap completed"
-    )
+    log("Snap: bootstrap completed")
 
     if settings_action is not None:
-
-        settings_action.setText(
-            "Snap"
-        )
-
-        settings_action.setEnabled(
-            True
-        )
+        settings_action.setText("Snap")
+        settings_action.setEnabled(True)
 
     start_ocr()
 
@@ -345,52 +411,31 @@ def check_bootstrap():
 def start_ocr():
     global ocr_process
 
-    if ocr_process is not None:
-
-        if ocr_process.poll() is None:
-
-            log(
-                "Snap: OCR is already running"
-            )
-
-            return
+    if ocr_process is not None and ocr_process.poll() is None:
+        log("Snap: OCR is already running")
+        return
 
     ocr_path = os.path.join(
         current_dir,
         "ocr.py"
     )
 
-    log(
-        f"Snap: OCR path = {ocr_path}"
-    )
+    log(f"Snap: OCR path = {ocr_path}")
 
     if not os.path.exists(ocr_path):
-
-        log(
-            "Snap: ocr.py was not found"
-        )
-
-        log(
-            "Snap: current addon directory contents:"
-        )
+        log("Snap: ocr.py was not found")
+        log("Snap: current addon directory contents:")
 
         for name in os.listdir(current_dir):
-            log(
-                f"  {name}"
-            )
+            log(f"  {name}")
 
         return
 
     if not os.path.exists(venv_python):
-
-        log(
-            "Snap: Python environment was not found"
-        )
-
+        log("Snap: Python environment was not found")
         return
 
     try:
-
         log_file = open(
             log_path,
             "a",
@@ -408,61 +453,37 @@ def start_ocr():
             stderr=subprocess.STDOUT
         )
 
-        log(
-            f"Snap: OCR started, PID={ocr_process.pid}"
-        )
+        log(f"Snap: OCR started, PID={ocr_process.pid}")
 
     except Exception as e:
-
-        log(
-            f"Snap: failed to start OCR: {e}"
-        )
+        log(f"Snap: failed to start OCR: {e}")
 
 
 def open_settings(_checked=False):
     global settings_process
 
-    log(
-        "Snap: settings button clicked"
-    )
+    log("Snap: settings button clicked")
 
-    if settings_process is not None:
-
-        if settings_process.poll() is None:
-
-            log(
-                "Snap: settings are already running"
-            )
-
-            return
+    if settings_process is not None and settings_process.poll() is None:
+        log("Snap: settings are already running")
+        return
 
     main_path = os.path.join(
         current_dir,
         "main.py"
     )
 
-    log(
-        f"Snap: main.py path = {main_path}"
-    )
+    log(f"Snap: main.py path = {main_path}")
 
     if not os.path.exists(main_path):
-
-        log(
-            "Snap: main.py was not found"
-        )
-
+        log("Snap: main.py was not found")
         return
 
     if not os.path.exists(venv_python):
-
-        log(
-            "Snap: Python environment is not ready"
-        )
-
+        log("Snap: Python environment is not ready")
         return
 
     try:
-
         log_file = open(
             log_path,
             "a",
@@ -480,15 +501,10 @@ def open_settings(_checked=False):
             stderr=subprocess.STDOUT
         )
 
-        log(
-            f"Snap: settings started, PID={settings_process.pid}"
-        )
+        log(f"Snap: settings started, PID={settings_process.pid}")
 
     except Exception as e:
-
-        log(
-            f"Snap: failed to start settings: {e}"
-        )
+        log(f"Snap: failed to start settings: {e}")
 
 
 def setup_menu():
@@ -501,21 +517,11 @@ def setup_menu():
         mw
     )
 
-    settings_action.setEnabled(
-        False
-    )
+    settings_action.setEnabled(False)
+    settings_action.triggered.connect(open_settings)
+    menu.addAction(settings_action)
 
-    settings_action.triggered.connect(
-        open_settings
-    )
-
-    menu.addAction(
-        settings_action
-    )
-
-    log(
-        "Snap: menu item created"
-    )
+    log("Snap: menu item created")
 
 
 def on_anki_start():
@@ -523,20 +529,12 @@ def on_anki_start():
 
     reset_log()
 
-    log(
-        "===== SNAP START ====="
-    )
-
+    log("===== SNAP START =====")
     setup_menu()
-
     start_bootstrap()
 
     bootstrap_timer = QTimer(mw)
-
-    bootstrap_timer.timeout.connect(
-        check_bootstrap
-    )
-
+    bootstrap_timer.timeout.connect(check_bootstrap)
     bootstrap_timer.start(500)
 
 
@@ -544,18 +542,13 @@ def on_anki_close():
     global ocr_process
     global settings_process
 
-    log(
-        "Snap: Anki is closing"
-    )
+    log("Snap: Anki is closing")
 
     for name, process in [
         ("OCR", ocr_process),
         ("settings", settings_process)
     ]:
-        if process is None:
-            continue
-
-        if process.poll() is not None:
+        if process is None or process.poll() is not None:
             continue
 
         try:
@@ -563,29 +556,16 @@ def on_anki_close():
 
             try:
                 process.wait(timeout=2)
-
-                log(
-                    f"Snap: {name} stopped"
-                )
+                log(f"Snap: {name} stopped")
 
             except subprocess.TimeoutExpired:
-
-                log(
-                    f"Snap: {name} did not stop, killing"
-                )
-
+                log(f"Snap: {name} did not stop, killing")
                 process.kill()
                 process.wait(timeout=2)
-
-                log(
-                    f"Snap: {name} killed"
-                )
+                log(f"Snap: {name} killed")
 
         except Exception as e:
-
-            log(
-                f"Snap: failed to stop {name}: {e}"
-            )
+            log(f"Snap: failed to stop {name}: {e}")
 
 
 main_window_did_init.append(
