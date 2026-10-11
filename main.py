@@ -2,8 +2,19 @@ import os
 import json
 import copy
 import uuid
+import re
 
 from webui import webui
+
+
+PROMPT_VERSION = "2026-10-11-v2"
+
+ALLOWED_TAGS = {
+    "noun", "verb", "adjective", "adverb", "pronoun", "determiner",
+    "preposition", "conjunction", "interjection", "auxiliary", "modal",
+    "particle", "numeral", "proper_noun", "phrase", "idiom",
+    "abbreviation", "symbol", "math"
+}
 
 
 DEFAULT_PROMPT = """
@@ -14,17 +25,15 @@ TRANSLATION LANGUAGE = language used for BACK.
 
 These are the actual settings for the current card. They are variable. Never replace them based on the conversation, context, or examples.
 
-TARGET is the only vocabulary item being taught. Use CONTEXT to determine its meaning, grammatical role, example, and pronunciation. Correct only obvious OCR errors.
+TARGET is the selected OCR text, not necessarily a clean word. The selection can accidentally include neighboring words, UI text, or OCR garbage. Use CONTEXT to identify the intended vocabulary item. If TARGET contains a sentence fragment or unrelated labels, do not copy the whole fragment into the card: isolate the most likely word or genuine lexical expression. Correct OCR errors only when OCR correction is enabled by the application.
 
-FRONT: only the vocabulary item being taught, in SOURCE LANGUAGE. Use the normal dictionary/base form for a single word when appropriate. Preserve fixed expressions, idioms, phrasal verbs, slang, compounds, and other multi-word lexical units.
+FRONT: only the vocabulary item being taught, in SOURCE LANGUAGE. Use the normal dictionary/base form for a single word when appropriate. Preserve genuine fixed expressions, idioms, phrasal verbs, slang, compounds, and other multi-word lexical units, but do not mistake surrounding sentence words for part of the expression.
 
-BACK: exactly ONE concise natural translation of FRONT into TRANSLATION LANGUAGE. Translate FRONT itself, not the whole context or example. Use context only to determine the intended meaning. Do not add synonyms, alternatives, explanations, parentheses, examples, labels, or source-language text.
-
-EXAMPLE: SOURCE LANGUAGE only. Reuse a usable sentence or phrase from CONTEXT and preserve its wording. Do not translate, paraphrase, expand, or invent another example when usable context exists. Remove only obvious OCR garbage or irrelevant surrounding text.
+BACK: exactly ONE concise natural translation of FRONT into TRANSLATION LANGUAGE. Translate FRONT itself, not the whole context. Use context only to determine the intended meaning. Do not add synonyms, alternatives, explanations, parentheses, labels, or source-language text.
 
 CUSTOM FIELDS: fill every configured field exactly once. Keep values concise and do not duplicate other fields.
 
-For custom_description: write a short dictionary-style definition of FRONT in SOURCE LANGUAGE only. Do not repeat FRONT and do not mention the field, card, or context.
+For custom_description: write a short dictionary-style definition of FRONT in SOURCE LANGUAGE only. Do not repeat FRONT and do not mention the field or card.
 
 For custom_transcription: return ONLY the IPA pronunciation of FRONT in SOURCE LANGUAGE, using /slashes/. Never return normal spelling, square brackets, labels, or explanations.
 
@@ -50,6 +59,8 @@ proper_noun
 phrase
 idiom
 abbreviation
+symbol
+math
 
 Use phrase for a normal multi-word lexical expression, including phrasal verbs. Use idiom only when its meaning is not directly predictable from the individual words.
 
@@ -57,7 +68,7 @@ Return only the structured JSON object.
 """.strip()
 
 
-win = webui.Window()
+win = None
 
 
 AVAILABLE_LANGUAGES = [
@@ -144,12 +155,24 @@ default_settings = {
     ],
 
     "prompt": DEFAULT_PROMPT,
+    "prompt_version": PROMPT_VERSION,
 
-    "note_model": "Базовый (ввод ответа)",
+    "note_model": "Default",
 
     "llm_url": "http://127.0.0.1:11434/v1",
 
     "llm_model": "",
+
+    "card_flag": 0,
+    "use_llm": True,
+    "auto_tag": "auto",
+    "field_enabled": {
+        "Front": True,
+        "Back": True,
+        "Example": True,
+        "Picture": True,
+        "Audio": True
+    },
 
     "ocr_correction": True
 }
@@ -336,6 +359,14 @@ def save_current_language_profile(
         profile["deck"] = deck
 
 
+def normalize_tags(value):
+    parts = [
+        p for p in re.split(r"[,\s]+", str(value or ""))
+        if p
+    ]
+    return " ".join(dict.fromkeys(parts))
+
+
 def load_settings():
     global settings
 
@@ -386,6 +417,16 @@ def load_settings():
     settings.update(
         loaded
     )
+
+    if loaded.get("prompt_version") != PROMPT_VERSION:
+        settings["prompt"] = DEFAULT_PROMPT
+        settings["prompt_version"] = PROMPT_VERSION
+        print("Prompt version changed. Replaced the saved prompt with DEFAULT_PROMPT.")
+    else:
+        settings["prompt_version"] = PROMPT_VERSION
+
+    # Legacy pending-card setting is ignored silently.
+    settings.pop("pending_tag", None)
 
     if isinstance(
         loaded.get("fields"),
@@ -578,6 +619,31 @@ def load_settings():
             default_settings["ocr_correction"]
         )
 
+    if not isinstance(settings.get("use_llm"), bool):
+        settings["use_llm"] = default_settings["use_llm"]
+
+    flag = settings.get("card_flag")
+    if (
+        isinstance(flag, bool)
+        or not isinstance(flag, int)
+        or not 0 <= flag <= 7
+    ):
+        settings["card_flag"] = default_settings["card_flag"]
+
+    if not isinstance(settings.get("auto_tag"), str):
+        settings["auto_tag"] = default_settings["auto_tag"]
+    else:
+        settings["auto_tag"] = normalize_tags(settings["auto_tag"])
+
+    merged_enabled = copy.deepcopy(default_settings["field_enabled"])
+    loaded_enabled = settings.get("field_enabled")
+    if isinstance(loaded_enabled, dict):
+        for key, val in loaded_enabled.items():
+            if key in merged_enabled and isinstance(val, bool):
+                merged_enabled[key] = val
+    merged_enabled["Front"] = True
+    settings["field_enabled"] = merged_enabled
+
     old_language = settings["language"]
 
     loaded_profiles = loaded.get(
@@ -659,6 +725,8 @@ def save_settings():
 
 
 def main():
+    global win
+    win = webui.Window()
     load_settings()
 
     draft_settings.clear()
@@ -799,6 +867,11 @@ def main():
         hotkey_capture_stopped
     )
 
+    win.bind("cardFlagChanged", cardFlagChanged)
+    win.bind("useLlmChanged", useLlmChanged)
+    win.bind("autoTagChanged", autoTagChanged)
+    win.bind("fieldEnabledChanged", fieldEnabledChanged)
+
     win.show(
         "main.html"
     )
@@ -819,7 +892,9 @@ def main():
         """
     )
 
+    print("Settings window event loop started")
     webui.wait()
+    print("Settings window event loop ended")
 
 
 def open_properties(event):
@@ -909,45 +984,64 @@ def open_info(event):
     )
 
 
+def close_settings_window(action):
+    """Close the settings window itself, then fall back to the global API."""
+    print(f"{action}: closing settings window")
+
+    try:
+        hotkey_capture_stopped(None)
+    except Exception as e:
+        print(f"Could not stop hotkey capture cleanly: {e}")
+
+    # Explicitly destroy this window. The Python-WebUI API exposes
+    # Window.destroy() to close the window and release its resources.
+    destroy_window = getattr(win, "destroy", None)
+    if callable(destroy_window):
+        try:
+            destroy_window()
+            print("Settings window destroyed with win.destroy()")
+            return
+        except Exception as e:
+            print(f"win.destroy() failed: {e}")
+
+    # Compatibility fallback for WebUI wrapper versions exposing close().
+    close_window = getattr(win, "close", None)
+    if callable(close_window):
+        try:
+            close_window()
+            print("Settings window closed with win.close()")
+            return
+        except Exception as e:
+            print(f"win.close() failed: {e}")
+
+    # Last resort: close all WebUI windows.
+    print("Falling back to webui.exit()")
+    try:
+        webui.exit()
+    except Exception as e:
+        print(f"webui.exit() failed: {e}")
+
+
 def appExit(event):
-    print(
-        "Exit"
-    )
-
-    hotkey_capture_stopped(
-        None
-    )
-
-    webui.exit()
+    print("Exit requested")
+    close_settings_window("Cancel")
 
 
 def appSave(event):
     global settings
 
-    print(
-        "Saving settings"
-    )
+    print("Saving settings")
 
-    save_current_language_profile(
-        draft_settings
-    )
+    try:
+        save_current_language_profile(draft_settings)
+        settings = copy.deepcopy(draft_settings)
+        save_settings()
+    except Exception as e:
+        print(f"ERROR: could not save settings: {e}")
+        return
 
-    settings = copy.deepcopy(
-        draft_settings
-    )
-
-    save_settings()
-
-    print(
-        "Saved:",
-        settings
-    )
-
-    hotkey_capture_stopped(
-        None
-    )
-
-    webui.exit()
+    print("Saved:", settings)
+    close_settings_window("Save")
 
 
 def requestSettings(event):
@@ -1491,6 +1585,34 @@ def requestSettings(event):
         }}
 
 
+        document.querySelectorAll('input, textarea').forEach((el) => {{
+            el.readOnly = false;
+            el.disabled = false;
+            el.removeAttribute('readonly');
+            el.removeAttribute('disabled');
+            el.style.pointerEvents = 'auto';
+            el.style.userSelect = 'text';
+            el.style.webkitUserSelect = 'text';
+        }});
+
+        if (noteTypeInput) {{
+            console.log('SNAP noteType tag =', noteTypeInput.tagName);
+
+            if (!['INPUT', 'TEXTAREA'].includes(noteTypeInput.tagName)) {{
+                noteTypeInput.contentEditable = 'true';
+                noteTypeInput.textContent = settings.note_model || '';
+                noteTypeInput.onblur = () => {{
+                    webui.noteTypeChanged(
+                        noteTypeInput.textContent.trim()
+                    );
+                }};
+            }}
+
+            noteTypeInput.addEventListener('mousedown', () => {{
+                setTimeout(() => noteTypeInput.focus(), 0);
+            }});
+        }}
+
         if (
             typeof renderCustomFields
             === 'function'
@@ -1500,6 +1622,40 @@ def requestSettings(event):
                 settings.custom_fields || []
             );
         }}
+
+        const cardFlag = document.getElementById('cardFlag');
+        if (cardFlag) {{
+            cardFlag.value = String(settings.card_flag || 0);
+            cardFlag.onchange = () => {{
+                webui.cardFlagChanged(String(cardFlag.value));
+            }};
+        }}
+
+        const useLlm = document.getElementById('useLlm');
+        if (useLlm) {{
+            useLlm.checked = settings.use_llm !== false;
+            useLlm.onchange = () => {{
+                webui.useLlmChanged(useLlm.checked ? 'true' : 'false');
+            }};
+        }}
+
+        const autoTag = document.getElementById('autoTag');
+        if (autoTag) {{
+            autoTag.value = settings.auto_tag || '';
+            autoTag.onblur = () => {{
+                webui.autoTagChanged(autoTag.value.trim() || ' ');
+            }};
+        }}
+
+        const enabledMap = settings.field_enabled || {{}};
+        document.querySelectorAll('[data-field-enabled]').forEach((el) => {{
+            const id = el.dataset.fieldEnabled;
+            el.checked = enabledMap[id] !== false;
+            if (id === 'Front') {{ el.checked = true; el.disabled = true; }}
+            el.onchange = () => {{
+                webui.fieldEnabledChanged(id, el.checked ? 'true' : 'false');
+            }};
+        }});
 
         webui.requestLanguageProfiles();
         """
@@ -2520,6 +2676,49 @@ def deleteCustomField(event):
         "Custom field deleted:",
         field_id
     )
+
+
+def cardFlagChanged(event):
+    try:
+        value = int(event.get_string_at(0).strip())
+    except ValueError:
+        return
+    if 0 <= value <= 7:
+        draft_settings["card_flag"] = value
+        print("Card flag:", value)
+
+
+def useLlmChanged(event):
+    value = event.get_string_at(0).strip().lower()
+    if value not in {"true", "false"}:
+        return
+    draft_settings["use_llm"] = value == "true"
+    print("Use LLM:", draft_settings["use_llm"])
+
+
+def autoTagChanged(event):
+    draft_settings["auto_tag"] = normalize_tags(
+        event.get_string_at(0)
+    )
+    print("Auto tag:", draft_settings["auto_tag"])
+
+
+def fieldEnabledChanged(event):
+    field_id = event.get_string_at(0).strip()
+    enabled = event.get_string_at(1).strip().lower() == "true"
+
+    if field_id not in default_settings["field_enabled"]:
+        return
+
+    if field_id == "Front":
+        enabled = True
+
+    store = draft_settings.setdefault(
+        "field_enabled",
+        copy.deepcopy(default_settings["field_enabled"])
+    )
+    store[field_id] = enabled
+    print("Field enabled:", field_id, enabled)
 
 
 if __name__ == "__main__":

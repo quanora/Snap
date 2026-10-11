@@ -10,137 +10,189 @@
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/css/styles.css">
+    <link rel="stylesheet" href="assets/css/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/css/styles-1.css">
 <script src="webui.js"></script>
 </head>
 
-<body class="d-flex flex-grow-1 align-self-stretch" style="padding-bottom: 0px;">
-    <div class="d-flex flex-grow-1" style="width:1440px;height:100%;background:white;overflow:hidden;justify-content:flex-start;align-items:flex-start;display:inline-flex;">
-        <div class="d-flex flex-grow-1" style="flex: 1 1 0;height: 100%;padding-left: 40px;padding-right: 40px;padding-top: 32px;padding-bottom: 32px;background: #F2F2F2;flex-direction: column;justify-content: flex-start;align-items: flex-start;gap: 10px;display: inline-flex;margin-left: 300px;">
-            <div class="d-flex flex-column flex-grow-1" style="align-self: stretch;flex: 1 1 0;flex-direction: column;justify-content: flex-start;align-items: flex-start;gap: 20px;display: flex;">
-                <div style="width:295px;height:73px;padding:10px;justify-content:center;align-items:center;gap:10px;display:inline-flex;">
-                    <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Properties</span></div>
+<body class="flex-grow-1 align-self-stretch d-flex" style="padding-bottom:0;margin:0;min-width:0;">
+    <div class="d-flex flex-grow-1" id="snapRoot" style="width:100%;min-width:0;height:100vh;background:white;overflow:hidden;justify-content:flex-start;align-items:flex-start;display:flex;">
+        <div class="d-flex flex-grow-1" id="snapMain" style="flex:1 1 0;height:100vh;min-width:0;padding-left:40px;padding-right:40px;padding-top:32px;padding-bottom:32px;background:#F2F2F2;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;margin-left:300px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;">
+            <div class="d-flex flex-column flex-grow-1" id="snapContent" style="align-self:stretch;flex:1 1 0;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:20px;display:flex;">
+                <div style="width:295px;height:73px;max-width:100%;padding:10px;justify-content:center;align-items:center;gap:10px;display:inline-flex;flex-shrink:0;">
+                    <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family:Inter,sans-serif;">Properties</span></div>
                 </div>
-                <div style="align-self:stretch;padding:24px;background:white;border-radius:32px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                    <div style="align-self:stretch;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                        <div style="flex:1 1 0;max-width:350px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
-                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;"><strong>Language profiles</strong></span></div>
-                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;">Write information for each language that you learning</span></div>
+                <div class="d-flex flex-grow-1" id="languageProfileCard" style="align-self:stretch;min-width:0;padding:24px;background:white;border-radius:32px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                    <div id="languageProfileRow" style="align-self:stretch;min-width:0;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                        <div style="flex:1 1 0;max-width:350px;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;">
+                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;"><strong>Language profiles</strong></span></div>
+                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;">Write information for each language that you learning</span></div>
                         </div>
-                        <div style="flex:1 1 0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:16px;display:inline-flex;">
-                            <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;"></div>
-                            <div id="languageProfiles" style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;"></div>
-                            <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;">
-                                <div style="align-self:stretch;flex-direction:column;justify-content:center;align-items:center;gap:0px;display:flex;">
-                                    <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;"><strong>Add new language profile</strong></span></div>
+                        <div style="flex:1 1 0;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:16px;display:flex;">
+                            <div id="languageProfiles" style="align-self:stretch;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;"></div>
+                            <div style="align-self:stretch;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;">
+                                <div style="align-self:stretch;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;display:flex;">
+                                    <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;"><strong>Add new language profile</strong></span></div>
                                     <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span>3 language maximum</span></div>
                                 </div>
-                                <div style="width:603px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:16px;display:flex;"><input type="text" id="languageSearch" class="input-app" placeholder="Search" style="margin: 0px;margin-bottom: 8px;" readonly="">
-                                    <div id="languageOptions" style="align-self:stretch;justify-content:flex-start;align-items:center;gap:8px;display:inline-flex;flex-wrap:wrap;align-content:center;"></div>
+                                <div style="width:100%;max-width:100%;min-width:0;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:16px;display:flex;"><input type="text" class="input-app" id="languageSearch" placeholder="Search" readonly="" style="width:100%;max-width:100%;min-width:0;margin:0;margin-bottom:8px;">
+                                    <div id="languageOptions" style="align-self:stretch;min-width:0;justify-content:flex-start;align-items:center;gap:8px;display:flex;flex-wrap:wrap;align-content:flex-start;"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="d-flex flex-grow-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Card fields</span></div>
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Use the exact name like in your Anki</span></div>
+                <div class="d-flex flex-grow-1" id="cardFieldsCard" style="align-self:stretch;min-width:0;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                    <div style="width:350px;max-width:100%;flex:0 0 350px;min-width:0;display:flex;flex-direction:column;gap:12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family:Inter,sans-serif;">Card fields</span></div>
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;">Use the exact name like in your Anki</span></div>
                     </div>
-                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
-                        <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;font-size: 24px;"><strong>Note type</strong></span><input type="text" id="noteType" class="input-app" placeholder="Search" style="margin: 0px;margin-bottom: 8px;" readonly="" label="Deck"></div>
-                        <div class="d-flex flex-grow-1" style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
-                            <div class="font-weight-bold" style="align-self: stretch;color: black;font-size: 24px;font-family: Inter, sans-serif;font-weight: 500;word-wrap: break-word;"><span class="font-weight-bold">Default</span></div>
-                            <div style="align-self:stretch;border-radius:16px;flex-direction:column;justify-content:center;align-items:center;display:flex;">
-                                <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
-                                    <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Front" style="font-family: Inter, sans-serif;">Front</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Front&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
+                    <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:12px;">
+                        <div style="align-self:stretch;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;font-size:24px;"><strong>Note type</strong></span><input type="text" aria-label="Anki note type" class="input-app" id="noteType" placeholder="Search" readonly="" style="width:100%;max-width:100%;min-width:0;margin:0;margin-bottom:8px;"></div>
+                        <div class="d-flex flex-grow-1" style="align-self:stretch;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
+                            <div class="font-weight-bold" style="align-self:stretch;color:black;font-size:24px;font-family:Inter,sans-serif;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold">Default</span></div>
+                            <div id="defaultFields" style="align-self:stretch;min-width:0;border-radius:16px;flex-direction:column;justify-content:center;align-items:stretch;display:flex;">
+                                <div data-field-row="Front" style="align-self:stretch;min-width:0;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0,0,0,.10) solid;justify-content:center;align-items:center;gap:16px;display:flex;">
+                                    <div style="flex:1 1 0;width:0;min-width:0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
+                                        <div style="min-width:0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" id="field-Front" style="font-family:Inter,sans-serif;">Front</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;flex-shrink:0;cursor:pointer;"><img src="assets/img/PencilSimple.svg" width="28" height="28" alt="Edit Front field"></div>
                                     </div>
-                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: #969696;">Front</span></div>
+                                    <div style="flex:1 1 0;width:0;min-width:0;color:rgb(150,150,150);font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" style="font-family:Inter,sans-serif;">Front</span></div><input class="d-none" type="checkbox" checked="" data-field-enabled="Front" disabled="">
+                                    <div style="width:28px;height:28px;flex:0 0 28px;"></div>
                                 </div>
-                                <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
-                                    <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Back" style="font-family: Inter, sans-serif;">Back</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Back&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
+                                <div data-field-row="Back" style="align-self:stretch;min-width:0;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0,0,0,.10) solid;justify-content:center;align-items:center;gap:16px;display:flex;">
+                                    <div style="flex:1 1 0;width:0;min-width:0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
+                                        <div style="min-width:0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" id="field-Back" style="font-family:Inter,sans-serif;">Back</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;flex-shrink:0;cursor:pointer;"><img src="assets/img/PencilSimple.svg" width="28" height="28" alt="Edit Back field"></div>
                                     </div>
-                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Back</span></div>
+                                    <div style="flex:1 1 0;width:0;min-width:0;color:rgb(150,150,150);font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" style="font-family:Inter,sans-serif;">Back</span></div><input class="d-none" type="checkbox" checked="" data-field-enabled="Back" disabled="">
+                                    <div style="width:28px;height:28px;flex:0 0 28px;"></div>
                                 </div>
-                                <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
-                                    <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div class="font-weight-lighter" style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Example" style="font-family: Inter, sans-serif;">Example</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Example&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
+                                <div data-field-row="Example" style="align-self:stretch;min-width:0;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0,0,0,.10) solid;justify-content:center;align-items:center;gap:16px;display:flex;">
+                                    <div style="flex:1 1 0;width:0;min-width:0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
+                                        <div style="min-width:0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" id="field-Example" style="font-family:Inter,sans-serif;">Example</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;flex-shrink:0;cursor:pointer;"><img src="assets/img/PencilSimple.svg" width="28" height="28" alt="Edit Example field"></div>
                                     </div>
-                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Example</span></div>
+                                    <div style="flex:1 1 0;width:0;min-width:0;color:rgb(150,150,150);font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" style="font-family:Inter,sans-serif;">Example</span></div><input class="d-none" type="checkbox" checked="" data-field-enabled="Example"><button class="btn d-flex flex-shrink-0 justify-content-center align-items-center p-0" type="button" data-field-toggle="Example" style="width:28px;height:28px;border:0;background:transparent;" aria-label="Disable Example field"><img src="assets/img/MinusCircle.svg" width="28" height="28" alt=""></button>
                                 </div>
-                                <div style="align-self:stretch;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0, 0, 0, 0.10) solid;justify-content:center;align-items:center;gap:16px;display:inline-flex;">
-                                    <div style="flex:1 1 0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
-                                        <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" id="field-Picture" style="font-family: Inter, sans-serif;">Picture</span></div>
-                                        <div data-svg-wrapper="" style="position:relative;" onclick="webui.editField(&#39;Picture&#39;)"><img src="assets/img/PencilSimple.svg" width="28" height="28" img></div>
+                                <div data-field-row="Picture" style="align-self:stretch;min-width:0;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0,0,0,.10) solid;justify-content:center;align-items:center;gap:16px;display:flex;">
+                                    <div style="flex:1 1 0;width:0;min-width:0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
+                                        <div style="min-width:0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" id="field-Picture" style="font-family:Inter,sans-serif;">Picture</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;flex-shrink:0;cursor:pointer;"><img src="assets/img/PencilSimple.svg" width="28" height="28" alt="Edit Picture field"></div>
                                     </div>
-                                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Picture</span></div>
+                                    <div style="flex:1 1 0;width:0;min-width:0;color:rgb(150,150,150);font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" style="font-family:Inter,sans-serif;">Picture</span></div><input class="d-none" type="checkbox" checked="" data-field-enabled="Picture"><button class="btn d-flex flex-shrink-0 justify-content-center align-items-center p-0" type="button" data-field-toggle="Picture" style="width:28px;height:28px;border:0;background:transparent;" aria-label="Disable Picture field"><img src="assets/img/MinusCircle.svg" width="28" height="28" alt=""></button>
                                 </div>
+<<<<<<< Updated upstream
+=======
+                                <div data-field-row="Audio" style="align-self:stretch;min-width:0;padding-top:8px;padding-bottom:8px;border-bottom:1px rgba(0,0,0,.10) solid;justify-content:center;align-items:center;gap:16px;display:flex;">
+                                    <div style="flex:1 1 0;width:0;min-width:0;justify-content:flex-start;align-items:center;gap:10px;display:flex;">
+                                        <div style="min-width:0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" id="field-Audio" style="font-family:Inter,sans-serif;">Audio</span></div>
+                                        <div data-svg-wrapper="" style="position:relative;flex-shrink:0;cursor:pointer;"><img src="assets/img/PencilSimple.svg" width="28" height="28" alt="Edit Audio field"></div>
+                                    </div>
+                                    <div style="flex:1 1 0;width:0;min-width:0;color:rgb(150,150,150);font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" data-field-text="" style="font-family:Inter,sans-serif;">Audio</span></div><input class="d-none" type="checkbox" checked="" data-field-enabled="Audio"><button class="btn d-flex flex-shrink-0 justify-content-center align-items-center p-0" type="button" data-field-toggle="Audio" style="width:28px;height:28px;border:0;background:transparent;" aria-label="Disable Audio field"><img src="assets/img/MinusCircle.svg" width="28" height="28" alt=""></button>
+                                </div>
+>>>>>>> Stashed changes
                             </div>
                         </div>
-                        <div class="text-left d-flex flex-grow-1" style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
+                        <div class="text-left d-flex flex-grow-1" style="align-self:stretch;min-width:0;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:10px;display:flex;">
                             <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:4px;display:flex;">
-                                <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Custom</span></div>
-                                <div style="align-self: stretch;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">These fields will be written by AI</span></div>
+                                <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family:Inter,sans-serif;">Custom</span></div>
+                                <div style="align-self:stretch;opacity:1;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;color:rgb(150,150,150);">These fields will be written by AI</span></div>
                             </div>
-                            <div id="customFields" style="align-self:stretch;border-radius:16px;flex-direction:column;justify-content:center;align-items:center;display:flex;"></div>
-                            <div class="text-center d-flex flex-grow-1 app-btn" id="addCustomField" style="width: 100%;wflex: 1 1 0;padding-left: 16px;padding-right: 16px;padding-top: 4px;padding-bottom: 8px;background: #f2f2f2;border-radius: 8px;justify-content: center;align-items: center;gap: 10px;display: flex;margin-top: 12px;">
-                                <div class="text-center d-flex flex-grow-1 text-center" style="color: white;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;text-align: center;" onclick="webui.addCustomField()"><span class="font-weight-normal text-center flex-grow-1 text-center" style="font-family: Inter, sans-serif;text-align: center;color: rgb(0,0,0);">Add</span></div>
+                            <div id="customFields" style="align-self:stretch;min-width:0;border-radius:16px;flex-direction:column;justify-content:center;align-items:stretch;display:flex;"></div>
+                            <div class="text-center d-flex flex-grow-1 app-btn" id="addCustomField" role="button" tabindex="0" style="width:100%;min-width:0;padding-left:16px;padding-right:16px;padding-top:4px;padding-bottom:8px;background:#f2f2f2;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;margin-top:12px;">
+                                <div class="text-center d-flex flex-grow-1" style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;text-align:center;"><span class="font-weight-normal text-center flex-grow-1" style="font-family:Inter,sans-serif;text-align:center;color:rgb(0,0,0);">Add</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="d-flex flex-grow-1" id="deckInput-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">Hotkey</span></div>
-                        <div class="d-flex flex-grow-1 flex-fill" style="align-self: stretch;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span style="font-family: Inter, sans-serif;">Press a keyboard shortcut to start word and context capture</span></div>
+                <div class="d-flex flex-grow-1" id="deckInput-1" style="align-self:stretch;min-width:0;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                    <div style="width:350px;max-width:100%;flex:0 1 350px;min-width:0;display:flex;flex-direction:column;gap:12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;font-weight:bold;">Hotkey</span></div>
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;">Press a keyboard shortcut to start word and context capture</span></div>
                     </div>
-                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px;"><input type="text" id="hotkeyInput" class="input-app" placeholder="Cmd + Shift + A" style="margin: 0px;margin-bottom: 8px;" readonly=""></div>
+                    <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:12px;"><input type="text" class="input-app" id="hotkeyInput" placeholder="Cmd + Shift + A" readonly="" style="width:100%;max-width:100%;min-width:0;margin:0;margin-bottom:8px;"></div>
                 </div>
-                <div class="d-flex flex-grow-1" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                    <div style="width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">API URL</span></div>
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;">Connect to a local OpenAI-compatible language model</span></div>
+                <div class="d-flex flex-grow-1" id="apiCard" style="align-self:stretch;min-width:0;padding:24px;background:white;border-radius:32px;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:24px;display:flex;">
+                    <div style="align-self:stretch;min-width:0;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                        <div style="width:350px;max-width:100%;flex:0 1 350px;min-width:0;display:flex;flex-direction:column;gap:12px;">
+                            <div style="align-self:stretch;display:flex;align-items:center;justify-content:space-between;gap:12px;"><label for="LLM" style="color: black;font-size: 24px;font-family: Inter,sans-serif;font-weight: bold;margin: 0;">LLM</label><input type="checkbox" id="useLlm" class="snap-toggle" aria-label="LLM" checked=""></div>
+                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;">Connect to a local OpenAI-compatible language model and configure generation.</span></div>
+                        </div>
+                        <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:12px;">
+                            <div id="llmFields" style="align-self:stretch;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:20px;">
+                                <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:4px;display:flex;">
+                                    <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family:Inter,sans-serif;">API URL</span></div><input type="text" class="input-app" id="llmUrl" placeholder="http://127.0.0.1:11434/v1" style="width:100%;max-width:100%;min-width:0;margin:0;"><span style="font-family: Inter,sans-serif;font-size: 24px;opacity: 1;color: rgb(150,150,150);">I would recommend to use LM Studio for this:</span>
+                                    <div style="align-self: stretch;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;text-decoration: underline;word-wrap: break-word;"><span id="lmStudioLink" style="font-family: Inter,sans-serif;overflow-wrap: anywhere;color: rgb(150,150,150);">https://lmstudio.ai/docs/developer/core/server/serve-on-network</span>
+                                        <div style="align-self: stretch;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"></div>
+                                    </div>
+                                </div>
+                                <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:4px;display:flex;">
+                                    <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family:Inter,sans-serif;">Model name</span></div>
+                                    <div style="align-self:stretch;opacity:1;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;color:rgb(150,150,150);">Optional. Empty uses the loaded model</span></div><input type="text" class="input-app" id="llmModel" placeholder="Leave empty to auto-detect" style="width:100%;max-width:100%;min-width:0;margin:0;">
+                                </div>
+                                <div style="align-self: stretch;padding-top: 8px;padding-bottom: 8px;display: flex;align-items: center;justify-content: space-between;gap: 16px;border-top: 0px solid rgba(0,0,0,.10) ;"><label for="ocrCorrection" style="color:black;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin:0;">Correct OCR errors</label><input type="checkbox" aria-label="Correct obvious OCR errors" checked="" class="snap-toggle" id="ocrCorrection"></div>
+                            </div>
+                            <div id="llmDisabledMessage" style="display:none;align-self:stretch;min-width:0;color:black;font-size:24px;font-family:Inter,sans-serif;font-weight:400;line-height:1.35;"><span> Enable LLM to configure these settings. </span></div>
+                        </div>
                     </div>
-                    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 8px;"><input class="d-flex flex-grow-1 input-app" type="text" id="llmUrl" placeholder="http://127.0.0.1:11434" style="min-width: 0;flex:1 1 0;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;display:inline-flex;">
-                        <div class="d-flex flex-grow-1" style="align-self:stretch;opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="d-flex flex-grow-1" style="font-family: Inter, sans-serif;">I would recommend to use LM Studio for this:</span></div>
-                        <div class="d-flex flex-grow-1" style="align-self:stretch;opacity:0.50;color:black;font-size:24px;font-family:Inter;font-weight:400;text-decoration:underline;word-wrap:break-word;"><span class="d-flex flex-grow-1" id="lmStudioLink" style="font-family: Inter, sans-serif;">https://lmstudio.ai/docs/developer/core/server/serve-on-network</span></div>
+                    <div class="d-flex flex-grow-1" id="deckInput-2" style="align-self:stretch;min-width:0;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                        <div style="width:350px;max-width:100%;flex:0 1 350px;min-width:0;display:flex;flex-direction:column;gap:12px;">
+                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;font-weight:bold;">Generation Prompt</span></div>
+                            <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;">Customize the content of each Anki card.</span></div>
+                        </div><textarea class="input-app" id="promptInput" placeholder="Write prompt" style="min-width:0;flex:1 1 0;height:299px;"></textarea>
                     </div>
                 </div>
-                <div class="d-flex flex-grow-1" id="deckInput-2" style="align-self:stretch;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:inline-flex;">
-                    <div style="flex:1 1 0;max-width:350px;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;font-weight: bold;">Generation Prompt</span></div>
-                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family: Inter, sans-serif;">Customize the content of each Anki card.</span></div>
-                    </div><textarea id="promptInput" class="input-app" style="min-width: 0;flex: 1 1 0;flex-direction: column;justify-content: center;align-items: flex-start;gap: 12px;display: inline-flex;height: 299px;" placeholder="Write promt"></textarea>
+                <div class="d-flex flex-grow-1" id="tagsFlagsCard" style="align-self:stretch;min-width:0;padding:24px;background:white;border-radius:32px;justify-content:flex-start;align-items:flex-start;gap:24px;display:flex;">
+                    <div style="width:350px;max-width:100%;flex:0 1 350px;min-width:0;display:flex;flex-direction:column;gap:12px;">
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;font-weight:bold;">Tags and flags</span></div>
+                        <div style="align-self:stretch;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span style="font-family:Inter,sans-serif;">Set tags and a flag for newly created Anki cards.</span></div>
+                    </div>
+                    <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:16px;">
+                        <div style="align-self:stretch;min-width:0;display:flex;flex-direction:column;gap:8px;"><label for="autoTag" style="color:black;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin:0;">Automatic tags</label><input type="text" class="input-app" id="autoTag" placeholder="auto" style="width:100%;max-width:100%;min-width:0;margin:0;">
+                            <div style="align-self:stretch;color:rgb(150,150,150);font-size:24px;font-family:Inter,sans-serif;font-weight:400;line-height:1.3;"><span>Separate multiple tags with commas or spaces. The AI-generated part-of-speech tag may be added automatically.</span></div>
+                        </div>
+                        <div style="align-self:stretch;padding-top:12px;padding-bottom:8px;border-top:1px rgba(0,0,0,.10) solid;display:flex;align-items:top;justify-content:space-between;gap:16px;">
+                            <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:4px;"><label for="cardFlag" style="color:black;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin:0;">Card flag</label>
+                                <div style="align-self:stretch;color:rgb(150,150,150);font-size:24px;font-family:Inter,sans-serif;font-weight:400;line-height:1.3;"><span>Use this function to manually double-check cards for any mistakes.</span></div>
+                            </div><select id="cardFlag" class="input-app" aria-label="Card flag" style="align-self: flex-start;;width:190px;max-width:50%;min-width:145px;margin:0;padding-right:40px;background-position:right 14px center;font-size:20px;line-height:1.0;">
+                                <option value="0">None</option>
+                                <option value="1">Red</option>
+                                <option value="2">Orange</option>
+                                <option value="3">Green</option>
+                                <option value="4">Blue</option>
+                                <option value="5">Pink</option>
+                                <option value="6">Turquoise</option>
+                                <option value="7">Purple</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="d-flex" style="width: 300px;height: 100vh;padding-left: 40px;padding-right: 40px;padding-top: 32px;padding-bottom: 32px;flex-direction: column;justify-content: space-between;align-items: flex-start;display: inline-flex;position: fixed;background: #ffffff;">
+        <div class="d-flex" id="snapSidebar" style="width:300px;height:100vh;padding-left:40px;padding-right:40px;padding-top:32px;padding-bottom:32px;flex-direction:column;justify-content:space-between;align-items:flex-start;display:flex;position:fixed;top:0;left:0;background:#ffffff;box-sizing:border-box;z-index:10;">
             <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:20px;display:flex;">
                 <div style="align-self:stretch;padding:10px;justify-content:center;align-items:center;gap:10px;display:inline-flex;">
-                    <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family: Inter, sans-serif;">Settings</span></div>
+                    <div style="flex:1 1 0;color:black;font-size:36px;font-family:Inter;font-weight:500;word-wrap:break-word;"><span class="font-weight-bold" style="font-family:Inter,sans-serif;">Settings</span></div>
                 </div>
                 <div style="align-self:stretch;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:4px;display:flex;">
-                    <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;" onclick="webui.goToProperties()">
-                        <div style="flex: 1 1 0;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;margin: 0px;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;color: rgb(0,0,0);">Properties</span></div>
+                    <div class="app-btn" style="align-self:stretch;padding:10px;justify-content:center;align-items:center;gap:10px;display:flex;cursor:pointer;">
+                        <div style="flex:1 1 0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;margin:0;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;color:rgb(0,0,0);">Properties</span></div>
                     </div>
-                    <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;opacity: 1;" onclick="webui.goToInformation()">
-                        <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(150,150,150);">Information</span></div>
+                    <div class="app-btn" style="align-self:stretch;padding:10px;justify-content:center;align-items:center;gap:10px;display:flex;cursor:pointer;" onclick="webui.goToInformation()">
+                        <div style="flex:1 1 0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;color:rgb(150,150,150);">Information</span></div>
                     </div>
                 </div>
-                <div class="app-btn" style="align-self: stretch;padding: 10px;justify-content: center;align-items: center;gap: 10px;display: inline-flex;opacity: 1;" onclick="webui.Reset()">
-                    <div style="flex: 1 1 0;opacity: 1;color: black;font-size: 24px;font-family: Inter;font-weight: 400;word-wrap: break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;opacity: 1;color: rgb(61,61,61);">Reset settings</span></div>
+                <div class="app-btn" style="align-self:stretch;padding:10px;justify-content:center;align-items:center;gap:10px;display:flex;cursor:pointer;" onclick="webui.Reset()">
+                    <div style="flex:1 1 0;color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;color:rgb(61,61,61);">Reset settings</span></div>
                 </div>
             </div>
-            <div class="d-flex" style="align-self:stretch;justify-content:flex-start;align-items:flex-start;gap:12px;display:inline-flex;">
-                <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;background:black;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;" onclick="webui.Save()">
-                    <div style="color:white;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Save</span></div>
+            <div class="d-flex" style="align-self:stretch;justify-content:flex-start;align-items:flex-start;gap:12px;display:flex;">
+                <div class="app-btn" style="flex:1 1 0;padding:8px 16px;background:black;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;cursor:pointer;" onclick="webui.Save()">
+                    <div style="color:white;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;">Save</span></div>
                 </div>
-                <div class="app-btn" style="flex:1 1 0;padding-left:16px;padding-right:16px;padding-top:8px;padding-bottom:8px;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;" onclick="webui.Exit()">
-                    <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family: Inter, sans-serif;">Back</span></div>
+                <div class="app-btn" style="flex:1 1 0;padding:8px 16px;border-radius:8px;justify-content:center;align-items:center;gap:10px;display:flex;cursor:pointer;" onclick="webui.Exit()">
+                    <div style="color:black;font-size:24px;font-family:Inter;font-weight:400;word-wrap:break-word;"><span class="font-weight-normal" style="font-family:Inter,sans-serif;">Back</span></div>
                 </div>
             </div>
         </div>
@@ -151,6 +203,9 @@
     <script src="assets/js/links.js"></script>
     <script src="assets/js/LLM.js"></script>
     <script src="assets/js/requestSettings.js"></script>
+    <script src="assets/js/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/js/fields.js"></script>
 </body>
 
 </html>

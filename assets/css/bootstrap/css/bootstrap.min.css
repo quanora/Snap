@@ -7463,7 +7463,7 @@ a.bg-dark:focus, a.bg-dark:hover, button.bg-dark:focus, button.bg-dark:hover {
 }
 
 .d-flex {
-  /*display: -ms-flexbox!important;*/
+  display: -ms-flexbox!important;
   display: flex!important;
 }
 
@@ -11892,32 +11892,5 @@ a.text-dark:focus, a.text-dark:hover {
 
 .invisible {
   visibility: hidden!important;
-}
-
-.input-app:focus {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 16px;
-  border-radius: 8px;
-  background: #eeeeee;
-  color: #222222;
-  cursor: pointer;
-  user-select: none;
-  font-size: 24px;
-}
-
-.chip:hover {
-  background: #dddddd;
-}
-
-.chip.selected {
-  background: #222222;
-  color: white;
 }
 
