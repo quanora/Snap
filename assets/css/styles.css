@@ -139,3 +139,42 @@ header h1 {
   gap: 8px;
 }
 
+/* Toggle appearance */
+
+#useLlm.snap-toggle, #ocrCorrection.snap-toggle {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background-color: #d3d3d3 !important;
+  background-image: radial-gradient( circle, #fff 0 10px, transparent 10.5px ) !important;
+  background-repeat: no-repeat !important;
+  background-size: 28px 28px !important;
+  background-position: left center !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+  cursor: pointer !important;
+  flex: 0 0 48px !important;
+  transition: background-color 0.18s ease, background-position 0.18s ease !important;
+}
+
+/* Enabled state */
+
+#useLlm.snap-toggle:checked, #ocrCorrection.snap-toggle:checked {
+  background-color: #111 !important;
+  background-position: right center !important;
+}
+
+/* Keyboard focus */
+
+#useLlm.snap-toggle:focus-visible, #ocrCorrection.snap-toggle:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.45) !important;
+  outline-offset: 3px;
+}
+
