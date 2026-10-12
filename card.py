@@ -10,7 +10,7 @@ import difflib
 import unicodedata
 
 from openai import OpenAI
-from main import DEFAULT_PROMPT, PROMPT_VERSION, ALLOWED_TAGS
+from main import DEFAULT_PROMPT
 
 
 ANKI_URL = "http://127.0.0.1:8765"
@@ -27,7 +27,27 @@ SETTINGS_PATH = os.path.join(
 ERROR_SOUND = "/System/Library/Sounds/Sosumi.aiff"
 AFPLAY = "/usr/bin/afplay"
 
+PROMPT_VERSION = 1
 
+ALLOWED_TAGS = {
+    "noun",
+    "verb",
+    "adjective",
+    "adverb",
+    "pronoun",
+    "determiner",
+    "preposition",
+    "conjunction",
+    "interjection",
+    "auxiliary",
+    "modal",
+    "particle",
+    "numeral",
+    "proper_noun",
+    "phrase",
+    "idiom",
+    "abbreviation"
+}
 
 
 def play_error_sound():
@@ -96,9 +116,15 @@ def load_settings():
             "Invalid settings.json"
         )
 
-    if settings.get("prompt_version") != PROMPT_VERSION:
+    # Do not overwrite a custom prompt just because main.py does not store
+    # prompt_version. The previous migration reset the user's prompt on every
+    # card-generation process. Only use the default when no usable prompt exists.
+    if not isinstance(settings.get("prompt"), str) or not settings["prompt"].strip():
         settings["prompt"] = DEFAULT_PROMPT
-        settings["prompt_version"] = PROMPT_VERSION
+
+    # Kept in memory for compatibility with future prompt migrations. This value
+    # is intentionally not used as a reason to replace a user-authored prompt.
+    settings["prompt_version"] = PROMPT_VERSION
 
     return settings
 

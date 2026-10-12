@@ -497,6 +497,8 @@ def humanize_job_error(message):
     text = re.sub(r"^Card:\s*(ERROR|not added)\s*=\s*", "", text, flags=re.IGNORECASE)
     folded = text.casefold()
 
+    if "cannot import name" in folded or "no module named" in folded:
+        return "Snap could not load a Python module or symbol. The installed Snap files or a dependency may be missing or out of sync: " + text[:135]
     if "looks like ocr garbage" in folded or "ocr noise" in folded:
         return "The selected text looks like OCR noise. Select the word again or enable OCR Correction."
     if "front that is not supported by target word or context" in folded:
@@ -3333,6 +3335,27 @@ def run_card_job(job):
             if line.startswith("Card: not added ="):
                 diagnostic = line.split("=", 1)[1].strip()
                 break
+
+        # If card.py exits before its own error handler runs (for example, an
+        # ImportError during module import), the useful cause is the final line
+        # of Python's traceback rather than a "Card: ERROR =" log entry.
+        if not diagnostic:
+            for line in reversed(lines):
+                candidate = line.strip()
+                if re.match(
+                    r"^(?:[A-Za-z_][A-Za-z0-9_.]*(?:Error|Exception|Interrupt|Exit)|SystemExit|KeyboardInterrupt)(?::|$)",
+                    candidate
+                ):
+                    diagnostic = candidate
+                    break
+
+        if not diagnostic and any(
+            line.strip().startswith("Traceback (most recent call last):")
+            for line in lines
+        ):
+            nonempty_lines = [line.strip() for line in lines if line.strip()]
+            if nonempty_lines:
+                diagnostic = nonempty_lines[-1]
 
         if return_code == 0:
             log(
