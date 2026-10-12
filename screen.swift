@@ -41,6 +41,41 @@ enum Config {
     static let queryLookahead = 0.5
     static let debug = ProcessInfo.processInfo.environment["SNAP_SCREEN_DEBUG"] == "1"
     static let debugInterval = 2.0
+
+    static let preferredVisionLanguages: [String] = {
+        let arguments = CommandLine.arguments
+        guard let index = arguments.firstIndex(of: "--languages"), index + 1 < arguments.count else {
+            return []
+        }
+        return arguments[index + 1]
+            .split(separator: ",")
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }()
+
+    static let cjkVisionLanguages: Set<String> = ["ja-JP", "zh-Hans", "zh-Hant", "ko-KR"]
+
+    static let supportedFastVisionLanguages: Set<String> = {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .fast
+        return Set((try? request.supportedRecognitionLanguages()) ?? [])
+    }()
+
+    static let supportedAccurateVisionLanguages: Set<String> = {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        return Set((try? request.supportedRecognitionLanguages()) ?? [])
+    }()
+
+    static let useAccurateForConfiguredCJK: Bool = {
+        let cjk = preferredVisionLanguages.filter { cjkVisionLanguages.contains($0) }
+        guard !cjk.isEmpty else { return false }
+        // An empty support list means Vision couldn't report capabilities. In that
+        // case, prefer accurate recognition for CJK rather than silently missing it.
+        if supportedFastVisionLanguages.isEmpty { return true }
+        return cjk.contains { !supportedFastVisionLanguages.contains($0) }
+    }()
+
     // ROI в координатах Vision (начало снизу слева). По умолчанию: нижние 65% экрана.
     static let roiRect: CGRect = {
         if let raw = ProcessInfo.processInfo.environment["SNAP_SCREEN_ROI"] {
@@ -428,6 +463,14 @@ final class SubtitleDetector: NSObject, SCStreamOutput, SCStreamDelegate {
         let newStream = SCStream(filter: filter, configuration: configuration, delegate: self)
         try newStream.addStreamOutput(self, type: .screen, sampleHandlerQueue: captureQueue)
         out("SCREEN_STREAM_OUTPUT_ATTACHED")
+        if !Config.preferredVisionLanguages.isEmpty {
+            out("SCREEN_VISION_LANGUAGES\t" + Config.preferredVisionLanguages.joined(separator: ","))
+        } else {
+            out("SCREEN_VISION_LANGUAGES\tautomatic detection")
+        }
+        if Config.useAccurateForConfiguredCJK {
+            out("SCREEN_VISION_ACCURATE_FOR_CJK")
+        }
 
         stream = newStream
         startWorker()
@@ -757,6 +800,12 @@ final class SubtitleDetector: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     private func detectSubtitleWithRecovery(_ pixelBuffer: CVPixelBuffer, pts: Double, displayTime: Double?, wallTime: Double, now: Double) -> SubtitleCandidate? {
+        // Some Vision fast-mode revisions do not support all configured CJK languages.
+        // If Japanese/Chinese/Korean isn't supported in fast mode, start with accurate
+        // recognition even on the first frame, not only after a subtitle was detected.
+        if Config.useAccurateForConfiguredCJK {
+            return detectSubtitle(pixelBuffer, pts: pts, displayTime: displayTime, wallTime: wallTime, recognitionLevel: .accurate)
+        }
         let fast = detectSubtitle(pixelBuffer, pts: pts, displayTime: displayTime, wallTime: wallTime, recognitionLevel: .fast)
         guard subtitleActive else { return fast }
         guard let fast else {
@@ -776,8 +825,23 @@ final class SubtitleDetector: NSObject, SCStreamOutput, SCStreamDelegate {
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = recognitionLevel
         request.usesLanguageCorrection = false
-        request.automaticallyDetectsLanguage = true
         request.minimumTextHeight = Config.minimumTextHeight
+
+        let preferred = Config.preferredVisionLanguages
+        if preferred.isEmpty {
+            request.automaticallyDetectsLanguage = true
+        } else {
+            let supported = recognitionLevel == .fast
+                ? Config.supportedFastVisionLanguages
+                : Config.supportedAccurateVisionLanguages
+            let usable = supported.isEmpty
+                ? preferred
+                : preferred.filter { supported.contains($0) }
+            // Keep configured preference order. When Vision's supported list is
+            // unavailable on this OS, try the explicitly configured identifiers.
+            request.recognitionLanguages = usable.isEmpty ? preferred : usable
+            request.automaticallyDetectsLanguage = false
+        }
         // regionOfInterest намеренно НЕ используется: боксы всегда в координатах полного кадра,
         // ROI применяется фильтром ниже.
 

@@ -7,16 +7,6 @@ import re
 from webui import webui
 
 
-PROMPT_VERSION = "2026-10-11-v2"
-
-ALLOWED_TAGS = {
-    "noun", "verb", "adjective", "adverb", "pronoun", "determiner",
-    "preposition", "conjunction", "interjection", "auxiliary", "modal",
-    "particle", "numeral", "proper_noun", "phrase", "idiom",
-    "abbreviation", "symbol", "math"
-}
-
-
 DEFAULT_PROMPT = """
 You create exactly ONE concise language-learning Anki card from a target and its context.
 
@@ -25,15 +15,17 @@ TRANSLATION LANGUAGE = language used for BACK.
 
 These are the actual settings for the current card. They are variable. Never replace them based on the conversation, context, or examples.
 
-TARGET is the selected OCR text, not necessarily a clean word. The selection can accidentally include neighboring words, UI text, or OCR garbage. Use CONTEXT to identify the intended vocabulary item. If TARGET contains a sentence fragment or unrelated labels, do not copy the whole fragment into the card: isolate the most likely word or genuine lexical expression. Correct OCR errors only when OCR correction is enabled by the application.
+TARGET is the only vocabulary item being taught. Use CONTEXT to determine its meaning, grammatical role, example, and pronunciation. Correct only obvious OCR errors.
 
-FRONT: only the vocabulary item being taught, in SOURCE LANGUAGE. Use the normal dictionary/base form for a single word when appropriate. Preserve genuine fixed expressions, idioms, phrasal verbs, slang, compounds, and other multi-word lexical units, but do not mistake surrounding sentence words for part of the expression.
+FRONT: only the vocabulary item being taught, in SOURCE LANGUAGE. Use the normal dictionary/base form for a single word when appropriate. Preserve fixed expressions, idioms, phrasal verbs, slang, compounds, and other multi-word lexical units.
 
-BACK: exactly ONE concise natural translation of FRONT into TRANSLATION LANGUAGE. Translate FRONT itself, not the whole context. Use context only to determine the intended meaning. Do not add synonyms, alternatives, explanations, parentheses, labels, or source-language text.
+BACK: exactly ONE concise natural translation of FRONT into TRANSLATION LANGUAGE. Translate FRONT itself, not the whole context or example. Use context only to determine the intended meaning. Do not add synonyms, alternatives, explanations, parentheses, examples, labels, or source-language text.
+
+EXAMPLE: SOURCE LANGUAGE only. Reuse a usable sentence or phrase from CONTEXT and preserve its wording. Do not translate, paraphrase, expand, or invent another example when usable context exists. Remove only obvious OCR garbage or irrelevant surrounding text.
 
 CUSTOM FIELDS: fill every configured field exactly once. Keep values concise and do not duplicate other fields.
 
-For custom_description: write a short dictionary-style definition of FRONT in SOURCE LANGUAGE only. Do not repeat FRONT and do not mention the field or card.
+For custom_description: write a short dictionary-style definition of FRONT in SOURCE LANGUAGE only. Do not repeat FRONT and do not mention the field, card, or context.
 
 For custom_transcription: return ONLY the IPA pronunciation of FRONT in SOURCE LANGUAGE, using /slashes/. Never return normal spelling, square brackets, labels, or explanations.
 
@@ -59,8 +51,6 @@ proper_noun
 phrase
 idiom
 abbreviation
-symbol
-math
 
 Use phrase for a normal multi-word lexical expression, including phrasal verbs. Use idiom only when its meaning is not directly predictable from the individual words.
 
@@ -68,7 +58,7 @@ Return only the structured JSON object.
 """.strip()
 
 
-win = None
+win = webui.Window()
 
 
 AVAILABLE_LANGUAGES = [
@@ -120,6 +110,9 @@ default_settings = {
         },
         "Picture": {
             "name": "Picture"
+        },
+        "Audio": {
+            "name": "Audio"
         }
     },
 
@@ -155,9 +148,8 @@ default_settings = {
     ],
 
     "prompt": DEFAULT_PROMPT,
-    "prompt_version": PROMPT_VERSION,
 
-    "note_model": "Default",
+    "note_model": "Базовый (ввод ответа)",
 
     "llm_url": "http://127.0.0.1:11434/v1",
 
@@ -417,13 +409,6 @@ def load_settings():
     settings.update(
         loaded
     )
-
-    if loaded.get("prompt_version") != PROMPT_VERSION:
-        settings["prompt"] = DEFAULT_PROMPT
-        settings["prompt_version"] = PROMPT_VERSION
-        print("Prompt version changed. Replaced the saved prompt with DEFAULT_PROMPT.")
-    else:
-        settings["prompt_version"] = PROMPT_VERSION
 
     # Legacy pending-card setting is ignored silently.
     settings.pop("pending_tag", None)
@@ -725,8 +710,6 @@ def save_settings():
 
 
 def main():
-    global win
-    win = webui.Window()
     load_settings()
 
     draft_settings.clear()

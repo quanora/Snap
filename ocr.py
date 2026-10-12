@@ -142,6 +142,7 @@ toast_process = None
 toast_lock = threading.RLock()
 toast_suppressed_for_selection = False
 toast_notification_pending = False
+toast_pending_payload = None
 
 
 ALL_LANGUAGE_CODES = {
@@ -151,13 +152,17 @@ ALL_LANGUAGE_CODES = {
 }
 
 VISION_LANGUAGE_CODES = {
-    "en": "en", "de": "de", "ru": "ru", "es": "es", "fr": "fr",
-    "it": "it", "pt": "pt", "ch_sim": "zh-Hans", "ch_tra": "zh-Hant",
-    "ja": "ja", "ko": "ko", "nl": "nl", "pl": "pl", "cs": "cs",
-    "hu": "hu", "ro": "ro", "sv": "sv", "da": "da", "no": "no",
-    "fi": "fi", "tr": "tr", "uk": "uk", "el": "el", "he": "he",
-    "ar": "ar"
+    "en": "en-US", "de": "de-DE", "ru": "ru-RU", "es": "es-ES",
+    "fr": "fr-FR", "it": "it-IT", "pt": "pt-BR",
+    "ch_sim": "zh-Hans", "ch_tra": "zh-Hant", "ja": "ja-JP",
+    "ko": "ko-KR", "nl": "nl-NL", "pl": "pl-PL", "cs": "cs-CZ",
+    "hu": "hu-HU", "ro": "ro-RO", "sv": "sv-SE", "da": "da-DK",
+    "no": "nb-NO", "fi": "fi-FI", "tr": "tr-TR", "uk": "uk-UA",
+    "el": "el-GR", "he": "he-IL", "ar": "ar-SA"
 }
+
+CJK_VISION_LANGUAGES = {"ja-JP", "zh-Hans", "zh-Hant", "ko-KR"}
+CJK_LANGUAGE_CODES = {"ja", "ch_sim", "ch_tra", "ko"}
 
 KEYCODES = {
     "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7,
@@ -219,68 +224,81 @@ def compile_toast_helper_if_needed():
 import Foundation
 import Darwin
 
-let app = NSApplication.shared
-app.setActivationPolicy(.accessory)
-
-let mouse = NSEvent.mouseLocation
-
-let selectedScreen =
-    NSScreen.screens.first(where: { $0.frame.contains(mouse) })
-    ?? NSScreen.main
-    ?? NSScreen.screens.first
-
-guard let screen = selectedScreen else {
-    exit(1)
+let arguments = CommandLine.arguments
+func argument(_ name: String, default fallback: String = "") -> String {
+    guard let index = arguments.firstIndex(of: name), index + 1 < arguments.count else { return fallback }
+    return arguments[index + 1]
 }
 
-let icon = NSImageView()
-let symbolConfig = NSImage.SymbolConfiguration(pointSize: 19, weight: .semibold)
-    .applying(NSImage.SymbolConfiguration(paletteColors: [
-        .white,
-        NSColor(calibratedRed: 0.20, green: 0.78, blue: 0.40, alpha: 1.0)
-    ]))
+let kind = argument("--kind", default: "success")
+let titleText = argument("--title", default: kind == "error" ? "Card not added" : "Card added")
+let messageText = String(argument("--message").prefix(200))
+let duration = max(1.0, min(Double(argument("--duration", default: kind == "error" ? "8.0" : "1.5")) ?? 1.5, 12.0))
+let isError = kind == "error"
 
-if let image = NSImage(
-    systemSymbolName: "checkmark.circle.fill",
-    accessibilityDescription: nil
-) {
+let app = NSApplication.shared
+app.setActivationPolicy(.accessory)
+let mouse = NSEvent.mouseLocation
+let selectedScreen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main ?? NSScreen.screens.first
+guard let screen = selectedScreen else { exit(1) }
+
+let accent = isError
+    ? NSColor(calibratedRed: 1.0, green: 0.27, blue: 0.30, alpha: 1.0)
+    : NSColor(calibratedRed: 0.20, green: 0.78, blue: 0.40, alpha: 1.0)
+let icon = NSImageView()
+let symbol = isError ? "exclamationmark.circle.fill" : "checkmark.circle.fill"
+let symbolConfig = NSImage.SymbolConfiguration(pointSize: 19, weight: .semibold)
+    .applying(NSImage.SymbolConfiguration(paletteColors: [.white, accent]))
+if let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) {
     icon.image = image.withSymbolConfiguration(symbolConfig) ?? image
 }
 icon.translatesAutoresizingMaskIntoConstraints = false
 
-let label = NSTextField(labelWithString: "Card added")
-label.font = NSFont.systemFont(ofSize: 14, weight: .semibold)
-label.textColor = NSColor.white.withAlphaComponent(0.95)
+let title = NSTextField(labelWithString: titleText)
+title.font = NSFont.systemFont(ofSize: 14, weight: .semibold)
+title.textColor = NSColor.white.withAlphaComponent(0.97)
+title.maximumNumberOfLines = 1
+title.cell?.lineBreakMode = .byTruncatingTail
+title.translatesAutoresizingMaskIntoConstraints = false
 
-let stack = NSStackView(views: [icon, label])
+let labels = NSStackView()
+labels.orientation = .vertical
+labels.alignment = .leading
+labels.spacing = 3
+labels.translatesAutoresizingMaskIntoConstraints = false
+labels.addArrangedSubview(title)
+if isError && !messageText.isEmpty {
+    let detail = NSTextField(wrappingLabelWithString: messageText)
+    detail.font = NSFont.systemFont(ofSize: 12, weight: .regular)
+    detail.textColor = NSColor.white.withAlphaComponent(0.78)
+    detail.maximumNumberOfLines = 2
+    detail.cell?.wraps = true
+    detail.cell?.lineBreakMode = .byTruncatingTail
+    detail.preferredMaxLayoutWidth = 430
+    detail.translatesAutoresizingMaskIntoConstraints = false
+    detail.widthAnchor.constraint(lessThanOrEqualToConstant: 430).isActive = true
+    labels.addArrangedSubview(detail)
+}
+
+title.widthAnchor.constraint(lessThanOrEqualToConstant: 430).isActive = true
+let stack = NSStackView(views: [icon, labels])
 stack.orientation = .horizontal
 stack.alignment = .centerY
-stack.spacing = 9
+stack.spacing = 10
 stack.translatesAutoresizingMaskIntoConstraints = false
 
-let height: CGFloat = 46
 let horizontalPadding: CGFloat = 20
-let width = ceil(stack.fittingSize.width) + horizontalPadding * 2
+let height: CGFloat = isError ? 68 : 46
+let width = min(max(ceil(stack.fittingSize.width) + horizontalPadding * 2, 170), 520)
 let radius = height / 2
-
 let visible = screen.visibleFrame
 let x = visible.midX - width / 2
-let targetY = visible.minY + visible.height * 0.17
+let targetY = visible.minY + visible.height * 0.24
 let startY = targetY - 10
 
-let panel = NSPanel(
-    contentRect: NSRect(x: x, y: startY, width: width, height: height),
-    styleMask: [.borderless, .nonactivatingPanel],
-    backing: .buffered,
-    defer: false
-)
-
+let panel = NSPanel(contentRect: NSRect(x: x, y: startY, width: width, height: height), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
 panel.level = .screenSaver
-panel.collectionBehavior = [
-    .canJoinAllSpaces,
-    .fullScreenAuxiliary,
-    .ignoresCycle
-]
+panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
 panel.isFloatingPanel = true
 panel.becomesKeyOnlyIfNeeded = true
 panel.hidesOnDeactivate = false
@@ -290,63 +308,45 @@ panel.backgroundColor = .clear
 panel.hasShadow = false
 panel.appearance = NSAppearance(named: .darkAqua)
 
-let mask = NSImage(
-    size: NSSize(width: height, height: height),
-    flipped: false
-) { rect in
+let mask = NSImage(size: NSSize(width: height, height: height), flipped: false) { rect in
     NSColor.black.setFill()
     NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
     return true
 }
 mask.capInsets = NSEdgeInsets(top: radius, left: radius, bottom: radius, right: radius)
 mask.resizingMode = .stretch
-
-let content = NSVisualEffectView(
-    frame: NSRect(x: 0, y: 0, width: width, height: height)
-)
+let content = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: width, height: height))
 content.material = .hudWindow
 content.blendingMode = .behindWindow
 content.state = .active
 content.appearance = NSAppearance(named: .darkAqua)
 content.maskImage = mask
-
 content.addSubview(stack)
-
 NSLayoutConstraint.activate([
     icon.widthAnchor.constraint(equalToConstant: 20),
     icon.heightAnchor.constraint(equalToConstant: 20),
+    stack.leadingAnchor.constraint(greaterThanOrEqualTo: content.leadingAnchor, constant: 16),
+    stack.trailingAnchor.constraint(lessThanOrEqualTo: content.trailingAnchor, constant: -16),
     stack.centerXAnchor.constraint(equalTo: content.centerXAnchor),
     stack.centerYAnchor.constraint(equalTo: content.centerYAnchor)
 ])
-
 panel.contentView = content
 panel.alphaValue = 0
 panel.orderFrontRegardless()
-
 NSAnimationContext.runAnimationGroup { context in
     context.duration = 0.22
     context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1.0)
     panel.animator().alphaValue = 1
-    panel.animator().setFrame(
-        NSRect(x: x, y: targetY, width: width, height: height),
-        display: true
-    )
+    panel.animator().setFrame(NSRect(x: x, y: targetY, width: width, height: height), display: true)
 }
-
-DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
     NSAnimationContext.runAnimationGroup({ context in
-        context.duration = 0.2
+        context.duration = 0.24
         context.timingFunction = CAMediaTimingFunction(name: .easeIn)
         panel.animator().alphaValue = 0
-        panel.animator().setFrame(
-            NSRect(x: x, y: targetY + 6, width: width, height: height),
-            display: true
-        )
-    }, completionHandler: {
-        app.terminate(nil)
-    })
+        panel.animator().setFrame(NSRect(x: x, y: targetY + 6, width: width, height: height), display: true)
+    }, completionHandler: { app.terminate(nil) })
 }
-
 app.run()
 '''
 
@@ -424,22 +424,34 @@ app.run()
     return True
 
 
-def show_card_added_notification():
-    global toast_process, toast_notification_pending
+def show_notification(kind="success", title=None, message="", duration=None):
+    global toast_process, toast_notification_pending, toast_pending_payload
+
+    if title is None:
+        title = "Card added" if kind == "success" else "Card not added"
+    if duration is None:
+        duration = 1.5 if kind == "success" else 8.0
+
+    payload = {
+        "kind": str(kind),
+        "title": str(title).replace("\n", " ").strip()[:100],
+        "message": str(message).replace("\t", " ").replace("\r", " ").replace("\n", " ").strip()[:200],
+        "duration": float(duration)
+    }
 
     if not compile_toast_helper_if_needed():
-        log("Card added notification unavailable.", "UI")
+        log("Native notification unavailable.", "UI")
         return
 
     with toast_lock:
         if toast_suppressed_for_selection:
             toast_notification_pending = True
-            log("Card added notification deferred until selection ends.", "UI")
+            toast_pending_payload = payload
+            log(f"Notification deferred until selection ends: {payload['title']}", "UI")
             return
 
         old_process = toast_process
         toast_process = None
-
         if old_process is not None and old_process.poll() is None:
             try:
                 old_process.terminate()
@@ -448,21 +460,77 @@ def show_card_added_notification():
 
         try:
             process = subprocess.Popen(
-                [toast_executable_path],
+                [
+                    toast_executable_path,
+                    "--kind", payload["kind"],
+                    "--title", payload["title"],
+                    "--message", payload["message"],
+                    "--duration", str(payload["duration"])
+                ],
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 start_new_session=True
             )
             toast_process = process
-
         except Exception as e:
-            log(f"Could not show Card added notification: {e}", "UI")
+            log(f"Could not show notification: {e}", "UI")
             return
 
     log(
-        f"Native Card added notification started. PID={process.pid}",
+        f"Native notification started: {payload['title']!r}, "
+        f"kind={payload['kind']}, PID={process.pid}",
         "UI"
+    )
+
+
+def show_card_added_notification():
+    show_notification(
+        kind="success",
+        title="Card added",
+        duration=1.5
+    )
+
+
+def humanize_job_error(message):
+    text = str(message or "").strip()
+    text = re.sub(r"^Card:\s*(ERROR|not added)\s*=\s*", "", text, flags=re.IGNORECASE)
+    folded = text.casefold()
+
+    if "looks like ocr garbage" in folded or "ocr noise" in folded:
+        return "The selected text looks like OCR noise. Select the word again or enable OCR Correction."
+    if "front that is not supported by target word or context" in folded:
+        return "The generated word was not supported. Select a clearer word or enable OCR Correction."
+    if "no lm studio llm is currently loaded" in folded or "no loaded model" in folded:
+        return "No language model is loaded in LM Studio. Load a model and try again."
+    if "could not read lm studio models" in folded or "lm studio models" in folded and "connection" in folded:
+        return "Snap could not reach LM Studio. Check that the local server is running."
+    if "ankiconnect connection error" in folded or "connection refused" in folded or "urlopen error" in folded:
+        return "Snap could not connect to AnkiConnect. Check that Anki is open and enabled."
+    if "still in the wrong language" in folded or "back language check failed" in folded:
+        return "The model returned a wrong language translation. Check the profile and try again."
+    if "duplicate" in folded or "cannot add" in folded and "note" in folded:
+        return "Anki rejected the note, possibly because a duplicate already exists."
+    if "timed out" in folded or "timeout" in folded or "exceeded" in folded:
+        return "Card generation timed out. Check LM Studio and try again."
+    if "invalid json" in folded or "structured output failed" in folded:
+        return "The language model returned an invalid response. Try again."
+    if not text:
+        return "Snap could not create the card. Check snap.log for details."
+
+
+    text = re.sub(r"\s+", " ", text)
+    if len(text) > 185:
+        text = text[:182].rstrip() + "…"
+    return text
+
+
+def show_error_notification(message, title="Card not added", duration=8.0):
+    show_notification(
+        kind="error",
+        title=title,
+        message=humanize_job_error(message),
+        duration=duration
     )
 
 
@@ -472,7 +540,6 @@ def dismiss_card_added_notification(suppress_for_selection=False):
     with toast_lock:
         if suppress_for_selection:
             toast_suppressed_for_selection = True
-
         process = toast_process
         toast_process = None
 
@@ -481,7 +548,7 @@ def dismiss_card_added_notification(suppress_for_selection=False):
 
     try:
         process.terminate()
-        log("Card added notification dismissal requested.", "UI")
+        log("Notification dismissal requested.", "UI")
 
         def reap_process():
             try:
@@ -501,9 +568,8 @@ def dismiss_card_added_notification(suppress_for_selection=False):
             daemon=True,
             name="snap-toast-cleanup"
         ).start()
-
     except Exception as e:
-        log(f"Could not dismiss Card added notification: {e}", "UI")
+        log(f"Could not dismiss notification: {e}", "UI")
 
 
 def load_settings_data():
@@ -593,6 +659,9 @@ def load_ocr_languages():
         if legacy_code in ALL_LANGUAGE_CODES:
             result.append(legacy_code)
 
+    # CJK subtitles are easily mistaken for Latin text when English is first.
+    # Keep the user's languages but prioritize CJK and move English to the end.
+    result.sort(key=lambda code: (code not in CJK_LANGUAGE_CODES, code == "en"))
     return result[:3] or ["en"]
 
 
@@ -605,16 +674,139 @@ def get_ocr_correction_enabled():
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _script_counts(text):
+    counts = {
+        "kana": 0, "han": 0, "hangul": 0, "cyrillic": 0,
+        "greek": 0, "hebrew": 0, "arabic": 0, "latin": 0,
+        "digits": 0
+    }
+    for char in str(text or ""):
+        code = ord(char)
+        if 0x3040 <= code <= 0x30FF or 0x31F0 <= code <= 0x31FF:
+            counts["kana"] += 1
+        elif 0x4E00 <= code <= 0x9FFF or 0x3400 <= code <= 0x4DBF:
+            counts["han"] += 1
+        elif 0xAC00 <= code <= 0xD7AF or 0x1100 <= code <= 0x11FF:
+            counts["hangul"] += 1
+        elif 0x0400 <= code <= 0x04FF:
+            counts["cyrillic"] += 1
+        elif 0x0370 <= code <= 0x03FF:
+            counts["greek"] += 1
+        elif 0x0590 <= code <= 0x05FF:
+            counts["hebrew"] += 1
+        elif 0x0600 <= code <= 0x06FF:
+            counts["arabic"] += 1
+        elif char.isdigit():
+            counts["digits"] += 1
+        elif char.isalpha() and code < 0x250:
+            counts["latin"] += 1
+    return counts
+
+
+def detect_profile_language(word, context=""):
+    """Choose a configured profile from clear writing-system evidence.
+
+    Ambiguous Latin-only input returns None when multiple Latin-script profiles
+    exist, allowing card.py to keep its existing language-detection behavior.
+    """
+    settings = load_settings_data()
+    profiles = settings.get("language_profiles", {})
+    if not isinstance(profiles, dict) or not profiles:
+        return None
+
+    by_code = {}
+    for name in profiles:
+        code = language_name_to_ocr_code(name)
+        if code:
+            by_code.setdefault(code, name)
+
+    def pick(*codes):
+        for code in codes:
+            if code in by_code:
+                return by_code[code]
+        return None
+
+    target = _script_counts(word)
+    ctx = _script_counts(context)
+
+    # If OCR returned an alphanumeric-looking token, use subtitle script as
+    # evidence rather than treating the Latin noise as a real English word.
+    target_is_mixed_noise = target["latin"] >= 2 and target["digits"] >= 1
+    if target_is_mixed_noise:
+        if ctx["kana"]:
+            return pick("ja")
+        if ctx["hangul"]:
+            return pick("ko")
+        if ctx["han"]:
+            return pick("ja", "ch_sim", "ch_tra")
+        if ctx["cyrillic"]:
+            return pick("ru", "uk")
+        if ctx["greek"]:
+            return pick("el")
+        if ctx["hebrew"]:
+            return pick("he")
+        if ctx["arabic"]:
+            return pick("ar")
+
+    if target["kana"]:
+        return pick("ja")
+    if target["hangul"]:
+        return pick("ko")
+    if target["han"]:
+        if ctx["kana"]:
+            return pick("ja", "ch_sim", "ch_tra")
+        return pick("ch_sim", "ch_tra", "ja")
+    if target["cyrillic"]:
+        return pick("uk", "ru") if any(ch in str(word).lower() for ch in "їєґ") else pick("ru", "uk")
+    if target["greek"]:
+        return pick("el")
+    if target["hebrew"]:
+        return pick("he")
+    if target["arabic"]:
+        return pick("ar")
+
+    # Context can identify the script even if the selected crop was poorly read.
+    if ctx["kana"]:
+        return pick("ja")
+    if ctx["hangul"]:
+        return pick("ko")
+    if ctx["han"]:
+        return pick("ja", "ch_sim", "ch_tra")
+    if ctx["cyrillic"]:
+        return pick("ru", "uk")
+    if ctx["greek"]:
+        return pick("el")
+    if ctx["hebrew"]:
+        return pick("he")
+    if ctx["arabic"]:
+        return pick("ar")
+
+    latin_profiles = [
+        name for code, name in by_code.items()
+        if code in {"en", "de", "es", "fr", "it", "pt", "nl", "pl", "cs", "hu", "ro", "sv", "da", "no", "fi", "tr"}
+    ]
+    if target["latin"] and len(latin_profiles) == 1:
+        return latin_profiles[0]
+
+    # For Latin-script ambiguity, prefer the configured default only when it is
+    # the sole matching profile; otherwise let card.py resolve it when enabled.
+    default_language = str(settings.get("language", "")).strip()
+    default_profile = next((name for name in profiles if name.casefold() == default_language.casefold()), None)
+    if len(latin_profiles) == 1:
+        return latin_profiles[0]
+    return None if len(latin_profiles) > 1 else default_profile
+
+
 def get_vision_languages(languages):
     result = []
 
     for language in languages:
         vision_code = VISION_LANGUAGE_CODES.get(language)
-
         if vision_code and vision_code not in result:
             result.append(vision_code)
 
-    return result or ["en"]
+    result.sort(key=lambda code: (code not in CJK_VISION_LANGUAGES, code == "en-US"))
+    return result or ["en-US"]
 
 
 def refresh_ocr_if_needed():
@@ -1999,6 +2191,8 @@ def screen_reader_loop(process,sock):
 
 def start_screen_process():
     global screen_process, screen_socket
+    refresh_ocr_if_needed()
+    preferred_languages = ",".join(get_vision_languages(loaded_ocr_languages))
     with screen_process_lock:
         if screen_process is not None and screen_process.poll() is None and screen_socket is not None: return True
     if not compile_screen_swift_if_needed():
@@ -2018,7 +2212,7 @@ def start_screen_process():
     log(f"App = {screen_bundle_path}","SCREEN")
     log(f"Socket = {screen_socket_path}","SCREEN")
     try:
-        launcher=subprocess.Popen(["/usr/bin/open","-n",screen_bundle_path,"--args","--socket",screen_socket_path,"--parent-pid",str(os.getpid())],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+        launcher=subprocess.Popen(["/usr/bin/open","-n",screen_bundle_path,"--args","--socket",screen_socket_path,"--parent-pid",str(os.getpid()),"--languages",preferred_languages],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
         try: _,stderr=launcher.communicate(timeout=10)
         except subprocess.TimeoutExpired:
             launcher.kill(); _,stderr=launcher.communicate(); log("LaunchServices open timed out.","SCREEN"); return False
@@ -2763,7 +2957,8 @@ def create_card_job(
     audio_reference_time,
     audio_interval=None,
     pending_subtitle=None,
-    context_variants=None
+    context_variants=None,
+    language_profile=None
 ):
     if not os.path.exists(
         image_path
@@ -2817,6 +3012,7 @@ def create_card_job(
         "word": word,
         "context": context,
         "context_variants": list(context_variants or []),
+        "language_profile": language_profile,
         "image": queued_image,
         "audio": "",
         "audio_error": "",
@@ -3037,13 +3233,25 @@ def run_card_job(job):
         )
         audio_path = ""
 
+    profile_name = str(job.get("language_profile") or "").strip()
+    profile_settings = load_settings_data().get("language_profiles", {})
+    profile_data = profile_settings.get(profile_name, {}) if (
+        profile_name and isinstance(profile_settings, dict)
+    ) else {}
+    if not isinstance(profile_data, dict):
+        profile_data = {}
+
     payload = {
         "word": job["word"],
         "context": job["context"],
         "context_variants": job.get("context_variants", []),
         "image": job["image"],
         "audio": audio_path,
-        "job_id": job["id"]
+        "job_id": job["id"],
+        "language_profile": profile_name,
+        "language": profile_name,
+        "translation_language": str(profile_data.get("translation_language", "")).strip(),
+        "deck": str(profile_data.get("deck", "")).strip()
     }
 
     log(
@@ -3067,6 +3275,9 @@ def run_card_job(job):
     )
 
     process = None
+    output_lines = []
+    output_lock = threading.Lock()
+    reader_thread = None
 
     try:
         process = subprocess.Popen(
@@ -3087,50 +3298,58 @@ def run_card_job(job):
         def read_card_output():
             if process.stdout is None:
                 return
-
             for line in process.stdout:
-                line = line.rstrip(
-                    "\r\n"
-                )
-
+                line = line.rstrip("\r\n")
                 if line:
-                    print(
-                        line,
-                        flush=True
-                    )
+                    with output_lock:
+                        output_lines.append(line)
+                    print(line, flush=True)
 
-        threading.Thread(
+        reader_thread = threading.Thread(
             target=read_card_output,
             daemon=True,
             name=f"snap-card-reader-{job['id']}"
-        ).start()
+        )
+        reader_thread.start()
 
         process.stdin.write(
-            json.dumps(
-                payload,
-                ensure_ascii=False
-            )
+            json.dumps(payload, ensure_ascii=False)
         )
         process.stdin.flush()
         process.stdin.close()
 
-        return_code = process.wait(
-            timeout=CARD_TIMEOUT
-        )
+        return_code = process.wait(timeout=CARD_TIMEOUT)
+        if reader_thread is not None:
+            reader_thread.join(timeout=1.5)
+
+        with output_lock:
+            lines = list(output_lines)
+
+        diagnostic = ""
+        for line in reversed(lines):
+            if line.startswith("Card: ERROR ="):
+                diagnostic = line.split("=", 1)[1].strip()
+                break
+            if line.startswith("Card: not added ="):
+                diagnostic = line.split("=", 1)[1].strip()
+                break
 
         if return_code == 0:
             log(
                 f"Job {job['id']} completed successfully.",
                 "QUEUE"
             )
+            job["error_message"] = ""
             return True
 
         log(
-            f"Job {job['id']} failed. "
-            f"Exit code={return_code}",
+            f"Job {job['id']} failed. Exit code={return_code}",
             "QUEUE"
         )
-
+        job["error_message"] = humanize_job_error(
+            diagnostic or f"Card generation failed with exit code {return_code}. Check snap.log for details."
+        )
+        log(f"Job {job['id']} failure reason = {job['error_message']}", "CARD")
         return False
 
     except subprocess.TimeoutExpired:
@@ -3138,6 +3357,9 @@ def run_card_job(job):
             f"Job {job['id']} exceeded "
             f"{CARD_TIMEOUT}s.",
             "QUEUE"
+        )
+        job["error_message"] = (
+            "Card generation timed out. Check whether LM Studio is responding, then try again."
         )
 
         if process is not None:
@@ -3167,9 +3389,12 @@ def run_card_job(job):
                 except Exception:
                     pass
 
+        if reader_thread is not None:
+            reader_thread.join(timeout=1.0)
         return False
 
     except Exception as e:
+        job["error_message"] = humanize_job_error(str(e))
         log(
             f"Job {job['id']} failed: {e}",
             "QUEUE"
@@ -3205,12 +3430,20 @@ def card_worker():
         try:
             if run_card_job(job):
                 show_card_added_notification()
+            else:
+                show_error_notification(
+                    job.get("error_message") or "Card generation failed. Check snap.log for technical details."
+                )
 
         except Exception as e:
             log(
                 f"Critical Job error "
                 f"{job.get('id')}: {e}",
                 "QUEUE"
+            )
+            show_error_notification(
+                str(e),
+                title="Snap could not create the card"
             )
 
         finally:
@@ -3267,6 +3500,7 @@ def run_ocr(hotkey_time):
         global ocr_running
         global toast_suppressed_for_selection
         global toast_notification_pending
+        global toast_pending_payload
 
         if state["released"]:
             return
@@ -3282,16 +3516,25 @@ def run_ocr(hotkey_time):
         with toast_lock:
             toast_suppressed_for_selection = False
             notification_pending = toast_notification_pending
+            pending_payload = toast_pending_payload
             toast_notification_pending = False
+            toast_pending_payload = None
 
         if notification_pending:
-            show_card_added_notification()
+            if pending_payload:
+                show_notification(**pending_payload)
+            else:
+                show_card_added_notification()
 
     try:
         log("Calling process_ocr.", "OCR")
         process_ocr(hotkey_time, release_selection)
     except Exception as e:
         log(f"Critical OCR error: {e}", "OCR")
+        show_error_notification(
+            f"OCR processing failed: {e}",
+            title="Snap could not read the selection"
+        )
     finally:
         release_selection()
 
@@ -3625,32 +3868,40 @@ def run_vision_ocr(
 ):
     refresh_ocr_if_needed()
 
-    languages = get_vision_languages(
-        loaded_ocr_languages
-    )
-
-    use_language_correction = (
-        get_ocr_correction_enabled()
-    )
-
+    wanted_languages = get_vision_languages(loaded_ocr_languages)
+    use_language_correction = get_ocr_correction_enabled()
     image = load_image(path)
 
-    request = (
-        Vision.VNRecognizeTextRequest
-        .alloc()
-        .init()
-    )
-
+    request = Vision.VNRecognizeTextRequest.alloc().init()
     request.setRecognitionLevel_(
         Vision.VNRequestTextRecognitionLevelAccurate
     )
 
-    request.setRecognitionLanguages_(
-        languages
-    )
+    try:
+        supported_result = request.supportedRecognitionLanguagesAndReturnError_(None)
+        supported_languages = set(supported_result[0] or []) if supported_result else set()
+    except Exception as e:
+        supported_languages = set()
+        log(f"Vision supported-language query unavailable: {e}", "OCR")
 
-    request.setUsesLanguageCorrection_(
-        use_language_correction
+    if supported_languages:
+        languages = [language for language in wanted_languages if language in supported_languages]
+        # If Apple's language query is incomplete, do not silently switch to English.
+        if not languages:
+            languages = wanted_languages
+    else:
+        languages = wanted_languages
+
+    languages.sort(key=lambda code: (code not in CJK_VISION_LANGUAGES, code == "en-US"))
+    has_cjk = any(language in CJK_VISION_LANGUAGES for language in languages)
+
+    request.setRecognitionLanguages_(languages)
+    request.setUsesLanguageCorrection_(False if has_cjk else use_language_correction)
+
+    log(
+        f"Vision request: languages={languages}, "
+        f"correction={False if has_cjk else use_language_correction}",
+        "OCR"
     )
 
     handler = (
@@ -3772,6 +4023,44 @@ def get_ocr_boxes(path):
         path,
         detail=True
     )
+
+
+def prepare_word_image(source_path, output_path):
+    """Upscale small selection crops for OCR without changing the template image."""
+    try:
+        image = Image.open(source_path).convert("RGB")
+        width, height = image.size
+        longest = max(width, height)
+        scale = 3 if longest < 300 else (2 if longest < 600 else 1)
+
+        if scale > 1:
+            image = image.resize(
+                (width * scale, height * scale),
+                Image.Resampling.LANCZOS
+            )
+
+        pad = 40
+        try:
+            background = image.getpixel((0, 0))
+        except Exception:
+            background = (0, 0, 0)
+
+        canvas = Image.new(
+            "RGB",
+            (image.width + pad * 2, image.height + pad * 2),
+            background
+        )
+        canvas.paste(image, (pad, pad))
+        canvas.save(output_path)
+        log(
+            f"Prepared word OCR image: {width}x{height} -> "
+            f"{canvas.width}x{canvas.height} (scale={scale}).",
+            "OCR"
+        )
+        return output_path
+    except Exception as e:
+        log(f"Could not prepare enlarged word image: {e}", "OCR")
+        return source_path
 
 
 def deduplicate_boxes(boxes):
@@ -4839,6 +5128,11 @@ def process_ocr(
         "word.png"
     )
 
+    word_ocr_path = os.path.join(
+        run_dir,
+        "word_ocr.png"
+    )
+
     context_path = os.path.join(
         run_dir,
         "context.png"
@@ -4892,6 +5186,10 @@ def process_ocr(
             )
 
             play_error_sound()
+            show_error_notification(
+                f"Could not open the macOS selection tool: {e}",
+                title="Word selection failed"
+            )
             return
 
         log(
@@ -4964,8 +5262,12 @@ def process_ocr(
 
         word_start = time.perf_counter()
 
+        prepared_word_path = prepare_word_image(
+            word_path,
+            word_ocr_path
+        )
         word_text = trim_word_edges(
-            get_ocr_text(word_path)
+            get_ocr_text(prepared_word_path)
         )
 
         log(
@@ -4981,6 +5283,10 @@ def process_ocr(
             )
 
             play_error_sound()
+            show_error_notification(
+                "Try a larger selection or check OCR language settings.",
+                title="Text not recognized"
+            )
             return
 
         log(
@@ -5079,6 +5385,15 @@ def process_ocr(
             "OCR"
         )
 
+        language_profile = detect_profile_language(
+            word_text,
+            context_text
+        )
+        log(
+            f"Detected language profile = {language_profile or '[not determined]'}",
+            "OCR"
+        )
+
         card_ok = False
 
         if card_future is not None:
@@ -5106,6 +5421,10 @@ def process_ocr(
             )
 
             play_error_sound()
+            show_error_notification(
+                "Snap could not capture the image to attach to the card. Check Screen Recording permission and try again.",
+                title="Screenshot failed"
+            )
             return
 
         queued = create_card_job(
@@ -5115,13 +5434,18 @@ def process_ocr(
             hotkey_time,
             audio_interval,
             pending_subtitle,
-            context_variants=context_variants
+            context_variants=context_variants,
+            language_profile=language_profile
         )
 
         if not queued:
             log(
                 "Failed to create card job.",
                 "QUEUE"
+            )
+            show_error_notification(
+                "Snap could not queue the card job. The queue may be full or the screenshot could not be copied.",
+                title="Card was not queued"
             )
 
     finally:

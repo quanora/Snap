@@ -407,6 +407,46 @@ def get_language_profiles(settings):
     return profiles
 
 
+def apply_job_profile(settings, payload):
+    """Apply the language profile selected from this OCR job, if provided."""
+    profile_name = str(
+        payload.get("language_profile") or payload.get("language") or ""
+    ).strip()
+    if not profile_name:
+        return settings, None
+
+    profiles = get_language_profiles(settings)
+    selected_name = find_profile(profiles, profile_name)
+    if not selected_name:
+        print(
+            f"Card: job language profile '{profile_name}' is not configured; "
+            "falling back to normal profile detection"
+        )
+        return settings, None
+
+    selected = dict(profiles[selected_name])
+    translation_override = str(payload.get("translation_language") or "").strip()
+    deck_override = str(payload.get("deck") or "").strip()
+    if translation_override:
+        selected["translation_language"] = translation_override
+    if deck_override:
+        selected["deck"] = deck_override
+
+    effective = dict(settings)
+    effective["language"] = selected_name
+    effective["translation_language"] = selected["translation_language"]
+    effective["deck"] = selected["deck"]
+    effective_profiles = dict(settings.get("language_profiles", {})) if isinstance(settings.get("language_profiles"), dict) else {}
+    effective_profiles[selected_name] = selected
+    effective["language_profiles"] = effective_profiles
+
+    print(
+        f"Card: using OCR-selected profile = {selected_name}; "
+        f"translation={selected['translation_language']}; deck={selected['deck']}"
+    )
+    return effective, selected_name
+
+
 def find_profile(profiles, language):
     language = str(
         language or ""
@@ -2387,6 +2427,10 @@ def main():
         settings = load_job_settings(
             payload
         )
+        settings, job_profile_name = apply_job_profile(
+            settings,
+            payload
+        )
 
         profiles = get_language_profiles(
             settings
@@ -2409,10 +2453,15 @@ def main():
         if settings.get("use_llm", True) is False:
             print("Card: LLM disabled; creating a basic card without AI generation")
 
-            selected_profile_name = detect_by_unicode(
-                word + "\n" + context,
-                profiles
-            )
+            selected_profile_name = find_profile(
+                profiles,
+                job_profile_name
+            ) if job_profile_name else None
+            if selected_profile_name is None:
+                selected_profile_name = detect_by_unicode(
+                    word + "\n" + context,
+                    profiles
+                )
             if selected_profile_name is None:
                 selected_profile_name = find_profile(
                     profiles,
@@ -2457,7 +2506,14 @@ def main():
                 settings
             )
 
-            if settings.get("ocr_correction", False) is True:
+            if job_profile_name:
+                # A clear script was identified before card.py was called.
+                # Reuse that profile and avoid an additional language-detection request.
+                source_language = job_profile_name
+                print(
+                    f"Card: using source language from OCR profile = {source_language}"
+                )
+            elif settings.get("ocr_correction", False) is True:
                 source_language = detect_source_language(
                     client,
                     model,
