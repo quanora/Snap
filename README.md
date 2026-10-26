@@ -8,7 +8,7 @@ Example of card from my deck
 
 <img width="1710" height="916" alt="image" src="https://github.com/user-attachments/assets/d8a62a57-e031-40aa-84e9-859634c6f563" />
 
-The example how OCR works for Japaneese
+The example how OCR works with Japaneese
 
 <img width="3420" height="1912" alt="image" src="https://github.com/user-attachments/assets/d7df1d85-7fd5-42ba-8ee3-4ce168b6c31b" />
 
