@@ -4,7 +4,11 @@
 # Snap (BETA)
 This is an add-on for Anki, which makes the process of creating cards faster while watching videos in a foreign language. You don't need to take multiple screenshots and search for information. It will capture information from your screen.
 
-The example of a card
+Example of card from my deck
+
+<img width="1710" height="916" alt="image" src="https://github.com/user-attachments/assets/d8a62a57-e031-40aa-84e9-859634c6f563" />
+
+The example how OCR works for Japaneese
 
 <img width="3420" height="1912" alt="image" src="https://github.com/user-attachments/assets/d7df1d85-7fd5-42ba-8ee3-4ce168b6c31b" />
 
