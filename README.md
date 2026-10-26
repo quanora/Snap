@@ -12,6 +12,23 @@ The example how OCR works with Japaneese
 
 <img width="3420" height="1912" alt="image" src="https://github.com/user-attachments/assets/d7df1d85-7fd5-42ba-8ee3-4ce168b6c31b" />
 
+# How to use it?
+
+1. Make sure that you filled in all required settings in Tools → Snap and installed AnkiConnect
+2. Start  audio monitoring using the hotkey Shift + Cmd + ]. It monitors your on-screen subtitles and records audio for your card. It’s all automatic, you don’t have to “capture” audio by yourself
+3. Start watching the video.
+4. Take a screenshot of a word or phrase you don’t understand using Shift + Cmd + A (you can change it in the settings)
+5. That’s all. Check the cards later for any mistakes (set flag in the settings of snap for that)
+
+# Available settings:
+
+1. Language profiles: up to 3 language profiles, each with its own  translation language and deck. (In theory, you can learn 3 languages using this tool)
+2. Use your own Note Type and specify name of each field
+3. Customise the prompt if you want
+4. Change hotkey to make screenshot of words
+5. Correct OCR errors using an LLM
+6. Set tags and a flag for newly created Anki cards.
+7. Disable the LLM and add translation manually if you prefer.
 
 # How does this work?
 
